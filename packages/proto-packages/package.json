@@ -1,5 +1,5 @@
 {
-  "name": "@wix/proto-modules",
+  "name": "@wix/proto-packages",
   "version": "1.0.0",
   "author": "Mantas Indrašius <mantasi@wix.com>",
   "publishConfig": {
@@ -9,6 +9,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
+    "build": ":",
     "test": "mocha test --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
