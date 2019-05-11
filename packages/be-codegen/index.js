@@ -19,9 +19,11 @@ async function runPbjs(args, pbjsArgs) {
 
   const typeNames = args._;
   const workDir = args['work-dir'] || process.cwd();
+  const sourceRoots = args['source-roots'] || ['proto', 'src/main/proto'];
 
   const context = create({
-    contextDir: workDir
+    contextDir: workDir,
+    sourceRoots
   });
 
   const files = await context.queryFilesFor(typeNames);
