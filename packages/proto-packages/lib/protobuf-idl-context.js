@@ -15,7 +15,9 @@ function create(options) {
 
   return {
     lookupType: readyContextMethod((context) => context.lookupType),
-    protoFiles: readyContextMethod((context) => context.protoFiles)
+    protoFiles: readyContextMethod((context) => context.protoFiles),
+    queryTypesFor: readyContextMethod((context) => context.queryTypesFor),
+    queryFilesFor: readyContextMethod((context) => context.queryFilesFor)
   };
 
   function readyContextMethod(getMethod) {
@@ -121,8 +123,13 @@ class ResolutionRoot extends pbjs.Root {
     this._reverseTargets = _.invert(targets);
   }
 
-  loadContext() {
-    return super.load(this.protoFiles());
+  async loadContext() {
+    const root = await super.load(this.protoFiles());
+
+    root.queryTypesFor = (args) => queryTypesFor(root, args);
+    root.queryFilesFor = (args) => queryFilesFor(root, args);
+
+    return root;
   }
 
   protoFiles() {
@@ -144,6 +151,48 @@ class ResolutionRoot extends pbjs.Root {
       return path.resolve(origin, target);
     }
   }
+}
+
+function queryFilesFor(root, typeNames) {
+  return _.uniq(queryTypesFor(root, typeNames).map(({filename}) => filename));
+}
+
+function queryTypesFor(root, typeNames) {
+  const index = {}
+
+  typeNames.forEach(typeName => {
+    index[typeName] = root.lookupType(typeName);
+  });
+
+  collectDependency(root, Object.values(index), index);
+
+  return Object.values(index);
+}
+
+function collectDependency(root, types, index) {
+  if (types.length === 0) {
+    return;
+  }
+
+  const deps = [];
+
+  types.forEach(type => {
+    Object.keys(type.fields).forEach(fieldName => {
+      const {type: fieldTypeName} = type.fields[fieldName];
+
+      try {
+        const fieldType = root.lookupType(fieldTypeName);
+
+        if (fieldType) {
+          index[fieldTypeName] = fieldType;
+          deps.push(fieldType);
+        }
+      } catch(e) {
+      }
+    });
+  });
+
+  collectDependency(root, deps, index);
 }
 
 module.exports = {
