@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package dep.test;
+
+message Message {
+  string name = 1;
+}
