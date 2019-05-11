@@ -1,0 +1,28 @@
+{
+  "name": "@wix/proto-modules",
+  "version": "1.0.0",
+  "author": "Mantas Indrašius <mantasi@wix.com>",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "test": "mocha test --reporter mocha-env-reporter",
+    "release": "wnpm-release --no-shrinkwrap"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "mocha-env-reporter": "^3.0.0",
+    "wnpm-ci": "^6.2.55"
+  },
+  "dependencies": {
+    "fs-promise": "^2.0.3",
+    "klaw-promise": "^1.2.0",
+    "lodash": "^4.17.11",
+    "protobufjs": "^6.8.8",
+    "trie-search": "^1.2.9"
+  }
+}
