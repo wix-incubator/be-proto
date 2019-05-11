@@ -2,7 +2,9 @@ const path = require('path');
 const {main} = require('..');
 const {expect} = require('chai');
 
-describe('pbjs', () => {
+describe('pbjs', function() {
+
+  this.timeout(10000);
 
   it('should generate pbjs', async() => {
     const dir = path.resolve(__dirname, 'fixtures/simple-proto');
