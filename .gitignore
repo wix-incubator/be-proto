@@ -1,0 +1,7 @@
+.idea
+.history
+node_modules
+yarn.lock
+package-info.lock
+yarn-error.log
+target
