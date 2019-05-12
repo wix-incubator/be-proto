@@ -4,8 +4,13 @@ package test;
 
 import "test1.proto";
 import "dep-test.proto";
+import "used-by-other.proto";
 
 message NestedMessage {
   Message1 message1 = 1;
   dep.test.Message dep_message = 2;
+}
+
+message OtherMessage {
+  UsedByOther other = 1;
 }

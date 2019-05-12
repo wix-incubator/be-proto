@@ -154,7 +154,16 @@ class ResolutionRoot extends pbjs.Root {
 }
 
 function queryFilesFor(root, typeNames) {
-  return _.uniq(queryTypesFor(root, typeNames).map(({filename}) => filename));
+  const types = typeNames.map((typeName) => root.lookupType(typeName));
+  const index = {}
+
+  types.forEach(type => {
+    addFileDepsToIndex(type.parent, type.filename, index);
+  });
+
+  collectFileDependencies(root, Object.values(index), index);
+
+  return Object.keys(index);
 }
 
 function queryTypesFor(root, typeNames) {
@@ -164,12 +173,12 @@ function queryTypesFor(root, typeNames) {
     index[typeName] = root.lookupType(typeName);
   });
 
-  collectDependency(root, Object.values(index), index);
+  collectDependencies(root, Object.values(index), index);
 
   return Object.values(index);
 }
 
-function collectDependency(root, types, index) {
+function collectDependencies(root, types, index) {
   if (types.length === 0) {
     return;
   }
@@ -177,9 +186,37 @@ function collectDependency(root, types, index) {
   const deps = [];
 
   types.forEach(type => {
-    Object.keys(type.fields).forEach(fieldName => {
-      const {type: fieldTypeName} = type.fields[fieldName];
+    deps.concat(typeDepsFor(root, type, index));
+  });
 
+  collectDependencies(root, deps, index);
+}
+
+function collectFileDependencies(root, typeSets, index) {
+  if (typeSets.length === 0) {
+    return;
+  }
+
+  const deps = [];
+
+  typeSets.forEach(types => {
+    const typeDeps = _.uniq(_.flatten(types.map(type => typeDepsFor(root, type))));
+
+    typeDeps.forEach(type => {
+      deps.concat(addFileDepsToIndex(type.parent, type.filename, index));
+    });
+  });
+
+  collectFileDependencies(root, deps, index);
+}
+
+function typeDepsFor(root, type, index = {}) {
+  const deps = [];
+
+  Object.keys(type.fields).forEach(fieldName => {
+    const {type: fieldTypeName} = type.fields[fieldName];
+
+    if (!index[fieldTypeName]) {
       try {
         const fieldType = root.lookupType(fieldTypeName);
 
@@ -189,10 +226,19 @@ function collectDependency(root, types, index) {
         }
       } catch(e) {
       }
-    });
+    }
   });
 
-  collectDependency(root, deps, index);
+  return _.uniq(deps);
+}
+
+function addFileDepsToIndex(namespace, filename, index) {
+  if (!index[filename]) {
+    index[filename] = _.filter(namespace.nested, (nested) => nested.filename === filename);
+    return index[filename];
+  } else {
+    return [];
+  }
 }
 
 module.exports = {

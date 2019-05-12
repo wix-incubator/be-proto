@@ -2,7 +2,9 @@ const {create} = require('..');
 const path = require('path');
 const {expect} = require('chai');
 
-describe('Protobuf IDL context', () => {
+describe('Protobuf IDL context', function() {
+
+  this.timeout(10000);
 
   it('should load protobuf IDL', async() => {
     const givenContext = create({
@@ -47,6 +49,7 @@ describe('Protobuf IDL context', () => {
 
     const files = await givenContext.queryFilesFor(['test.NestedMessage']);
 
-    expect(files).to.have.length(3);
+    expect(files).to.have.length(4);
+    expect(files.join()).to.include('used-by-other.proto');
   });
 });
