@@ -1,0 +1,25 @@
+{
+  "name": "@wix/be-http-client",
+  "version": "1.0.0",
+  "author": "Mantas Indrašius <mantasi@wix.com>",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "npm run fetch:google.api.http && mkdir -p proto/google/api/ && cp target/googleapis/google/api/http.proto proto/google/api/",
+    "fetch:google.api.http": "git clone git@github.com:googleapis/googleapis.git target/googleapis || true",
+    "test": "mocha test --reporter mocha-env-reporter",
+    "release": "wnpm-release --no-shrinkwrap"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "googleapis": "^40.0.0",
+    "mocha": "^5.2.0",
+    "mocha-env-reporter": "^3.0.0",
+    "wnpm-ci": "^6.2.55"
+  },
+  "dependencies": {}
+}
