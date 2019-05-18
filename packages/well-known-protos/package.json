@@ -1,0 +1,22 @@
+{
+  "name": "@wix/well-known-protos",
+  "version": "1.0.0",
+  "author": "Mantas Indrašius <mantasi@wix.com>",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "npm run fetch:googleapis && npm run copy:googleapis",
+    "fetch:googleapis": "git clone git@github.com:googleapis/googleapis.git target/googleapis || true",
+    "copy:googleapis": "npm run copy:googleapis-dir && mv googleapis/target/googleapis/* googleapis && rm -rf googleapis/target",
+    "copy:googleapis-dir": "find target/googleapis/ -name '*.proto' | cpio -pdm googleapis/",
+    "test": ":",
+    "release": "wnpm-release --no-shrinkwrap"
+  },
+  "devDependencies": {
+  },
+  "dependencies": {}
+}
