@@ -17,6 +17,7 @@
     "release": "wnpm-release --no-shrinkwrap"
   },
   "devDependencies": {
+    "wnpm-ci": "^7.0.68"
   },
   "dependencies": {}
 }
