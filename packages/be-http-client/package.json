@@ -11,7 +11,7 @@
   "scripts": {
     "build": "npm run fetch:google.api.http && mkdir -p proto/google/api/ && cp target/googleapis/google/api/http.proto proto/google/api/",
     "fetch:google.api.http": "git clone git@github.com:googleapis/googleapis.git target/googleapis || true",
-    "test": "mocha test --reporter mocha-env-reporter",
+    "test": ":",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "devDependencies": {
