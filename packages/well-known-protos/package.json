@@ -9,10 +9,15 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": "npm run fetch:googleapis && npm run copy:googleapis",
+    "build": "npm run build:fetch && npm run build:copy",
+    "build:fetch": "npm run fetch:googleapis && npm run fetch:protobuf",
+    "build:copy": "npm run copy:googleapis && npm run copy:protobuf",
     "fetch:googleapis": "git clone git@github.com:googleapis/googleapis.git target/googleapis || true",
+    "fetch:protobuf": "git clone git@github.com:protocolbuffers/protobuf.git target/protobuf || true",
     "copy:googleapis": "npm run copy:googleapis-dir && mv googleapis/target/googleapis/* googleapis && rm -rf googleapis/target",
     "copy:googleapis-dir": "find target/googleapis/ -name '*.proto' | cpio -pdm googleapis/",
+    "copy:protobuf": "npm run copy:protobuf-dir && mv protobuf/target/protobuf/* protobuf && rm -rf protobuf/target",
+    "copy:protobuf-dir": "find target/protobuf/ -name '*.proto' | cpio -pdm protobuf/",
     "test": ":",
     "release": "wnpm-release --no-shrinkwrap"
   },
