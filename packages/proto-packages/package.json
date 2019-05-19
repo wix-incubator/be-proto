@@ -10,10 +10,13 @@
   "private": false,
   "scripts": {
     "build": ":",
+    "copy:proto": "mkdir -p test/proto/google/protobuf && cp node_modules/@wix/well-known-protos/protobuf/src/google/protobuf/descriptor.proto test/proto/google/protobuf/",
+    "pretest": "npm run copy:proto",
     "test": "mocha test --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "devDependencies": {
+    "@wix/well-known-protos": "^1.0.1",
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
     "mocha-env-reporter": "^3.0.0",

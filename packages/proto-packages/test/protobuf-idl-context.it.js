@@ -31,7 +31,8 @@ describe('Protobuf IDL context', function() {
   it('should lookup dependency types', async() => {
     const givenContext = create({
       contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
-      packagesDirName: 'deps'
+      packagesDirName: 'deps',
+      extraPackages: [path.join(__dirname, 'proto')]
     });
 
     const types = await givenContext.queryTypesFor(['test.NestedMessage']);
@@ -44,12 +45,13 @@ describe('Protobuf IDL context', function() {
   it('should lookup dependency files', async() => {
     const givenContext = create({
       contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
-      packagesDirName: 'deps'
+      packagesDirName: 'deps',
+      extraPackages: [path.join(__dirname, 'proto')]
     });
 
-    const files = await givenContext.queryFilesFor(['test.NestedMessage']);
+    const files = await givenContext.files();
 
-    expect(files).to.have.length(4);
     expect(files.join()).to.include('used-by-other.proto');
+    expect(files.join()).to.include('custom-field-options.proto');
   });
 });

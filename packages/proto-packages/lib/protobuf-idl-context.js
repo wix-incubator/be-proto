@@ -9,6 +9,7 @@ function create(options) {
 
   const contextDir = options.contextDir;
   const sourceRoots = options.sourceRoots || ['proto'];
+  const extraPackages = options.extraPackages || [];
   const packagesDirName = options.packagesDirName || 'node_modules';
 
   let rootResolving, context;
@@ -17,7 +18,7 @@ function create(options) {
     lookupType: readyContextMethod((context) => context.lookupType),
     protoFiles: readyContextMethod((context) => context.protoFiles),
     queryTypesFor: readyContextMethod((context) => context.queryTypesFor),
-    queryFilesFor: readyContextMethod((context) => context.queryFilesFor)
+    files: readyContextMethod((context) => context.loadedFiles)
   };
 
   function readyContextMethod(getMethod) {
@@ -37,7 +38,7 @@ function create(options) {
   }
 
   async function resolveRoot() {
-    const roots = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName);
+    const roots = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
 
     // const extraRootEntries = await Promise.all(extraRoots.map(root => resolveProtoFilesInDir(root).then(files => ({root, files}))));
 
@@ -49,13 +50,15 @@ function create(options) {
   }
 }
 
-async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName) {
+async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages  ) {
   const result = await klaw(contextDir, { preserveSymlinks: true });
 
   const protoFiles = [];
-  const packageDirs = [];
+  const packageDirs = extraPackages;
   const links = [];
   const origin = contextDir;
+
+  await collectProtofilesTo(extraPackages, protoFiles);
 
   result.forEach(fs => {
     if (fs.stats.isSymbolicLink()) {
@@ -73,7 +76,7 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName) {
 
   ts.addAll(protoFiles);
 
-  const existingRoots = await resolveProtoDirs(packageDirs, sourceRoots);
+  const existingRoots = (await resolveProtoDirs(packageDirs, sourceRoots)).concat(extraPackages);
 
   const roots = {};
 
@@ -85,6 +88,20 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName) {
   });
 
   return roots;
+}
+
+async function collectProtofilesTo(dirs, protoFiles) {
+  await Promise.all(dirs.map(async(dir) => {
+    const result = await klaw(dir, { preserveSymlinks: false });
+
+    result.forEach(fs => {
+      if (fs.path.toLowerCase().endsWith('.proto')) {
+        protoFiles.push({
+          path: fs.path
+        });
+      }
+    });
+  }));
 }
 
 async function resolveProtoDirs(packageDirs, sourceRoots) {
@@ -127,13 +144,16 @@ class ResolutionRoot extends pbjs.Root {
     const root = await super.load(this.protoFiles());
 
     root.queryTypesFor = (args) => queryTypesFor(root, args);
-    root.queryFilesFor = (args) => queryFilesFor(root, args);
 
     return root;
   }
 
   protoFiles() {
     return Object.values(this._targets);
+  }
+
+  loadedFiles() {
+    return this.files;
   }
 
   resolveContextPath(filename) {
@@ -151,19 +171,6 @@ class ResolutionRoot extends pbjs.Root {
       return path.resolve(origin, target);
     }
   }
-}
-
-function queryFilesFor(root, typeNames) {
-  const types = typeNames.map((typeName) => root.lookupType(typeName));
-  const index = {}
-
-  types.forEach(type => {
-    addFileDepsToIndex(type.parent, type.filename, index);
-  });
-
-  collectFileDependencies(root, Object.values(index), index);
-
-  return Object.keys(index);
 }
 
 function queryTypesFor(root, typeNames) {
@@ -193,6 +200,8 @@ function collectDependencies(root, types, index) {
 }
 
 function collectFileDependencies(root, typeSets, index) {
+  console.log(root.getFiles());
+
   if (typeSets.length === 0) {
     return;
   }
@@ -216,6 +225,10 @@ function typeDepsFor(root, type, index = {}) {
   Object.keys(type.fields).forEach(fieldName => {
     const {type: fieldTypeName} = type.fields[fieldName];
 
+    if (type.fields[fieldName].options) {
+      console.log(type.parent);
+    }
+
     if (!index[fieldTypeName]) {
       try {
         const fieldType = root.lookupType(fieldTypeName);
@@ -233,7 +246,7 @@ function typeDepsFor(root, type, index = {}) {
 }
 
 function addFileDepsToIndex(namespace, filename, index) {
-  if (!index[filename]) {
+  if (filename && !index[filename]) {
     index[filename] = _.filter(namespace.nested, (nested) => nested.filename === filename);
     return index[filename];
   } else {

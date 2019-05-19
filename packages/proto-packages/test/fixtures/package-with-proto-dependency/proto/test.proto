@@ -5,6 +5,7 @@ package test;
 import "test1.proto";
 import "dep-test.proto";
 import "used-by-other.proto";
+import "custom-field-options.proto";
 
 message NestedMessage {
   Message1 message1 = 1;
@@ -12,5 +13,5 @@ message NestedMessage {
 }
 
 message OtherMessage {
-  UsedByOther other = 1;
+  UsedByOther other = 1  [(test.options.field_option) = A];
 }
