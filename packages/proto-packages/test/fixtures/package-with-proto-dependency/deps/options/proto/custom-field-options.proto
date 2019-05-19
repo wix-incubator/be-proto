@@ -1,0 +1,14 @@
+syntax = "proto2";
+
+package test.options;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+    optional FieldOption field_option = 50001;
+}
+
+enum FieldOption {
+    A = 0;
+    B = 1;
+}
