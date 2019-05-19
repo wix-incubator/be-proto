@@ -5,3 +5,4 @@ yarn.lock
 package-info.lock
 yarn-error.log
 target
+**/test/proto

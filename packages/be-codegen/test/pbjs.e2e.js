@@ -4,11 +4,12 @@ const {expect} = require('chai');
 
 describe('pbjs', function() {
 
-  this.timeout(10000);
+  this.timeout(20000);
 
   it('should generate pbjs', async() => {
     const dir = path.resolve(__dirname, 'fixtures/simple-proto');
-    const result = await main(['pbjs', '--work-dir', dir, 'test.Message', '--',
+    const extra = path.resolve(__dirname, 'proto');
+    const result = await main(['pbjs', '--work-dir', dir, '--extra', extra, 'test.Message', '--',
       '-t', 'static-module', '-w', 'commonjs']);
 
     expect(result.stdout).to.include('test.Message');
