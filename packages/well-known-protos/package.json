@@ -16,8 +16,8 @@
     "fetch:protobuf": "git clone git@github.com:protocolbuffers/protobuf.git target/protobuf || true",
     "copy:googleapis": "npm run copy:googleapis-dir && mv googleapis/target/googleapis/* googleapis && rm -rf googleapis/target",
     "copy:googleapis-dir": "find target/googleapis/ -name '*.proto' | cpio -pdm googleapis/",
-    "copy:protobuf": "npm run copy:protobuf-dir && mv protobuf/target/protobuf/* protobuf && rm -rf protobuf/target",
-    "copy:protobuf-dir": "find target/protobuf/ -name '*.proto' | cpio -pdm protobuf/",
+    "copy:protobuf": "npm run copy:protobuf-dir && mv protobuf/target/protobuf/src/* protobuf && rm -rf protobuf/target",
+    "copy:protobuf-dir": "find target/protobuf/src -name '*.proto' | cpio -pdm protobuf/",
     "test": ":",
     "release": "wnpm-release --no-shrinkwrap"
   },
