@@ -2,7 +2,7 @@ const {generateMethod} = require('./http-method-generator');
 const protobuf = require('protobufjs');
 const {expect} = require('chai');
 
-describe.only('http-method-generator', () => {
+describe('http-method-generator', () => {
 
   it('should generate an HTTP method', () => {
     const givenProto = protobuf.parse(`
