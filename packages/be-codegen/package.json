@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@wix/proto-packages": "^1.0.0",
+    "fs-extra": "^8.0.1",
     "protobufjs": "^6.8.8"
   }
 }

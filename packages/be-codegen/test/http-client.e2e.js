@@ -2,13 +2,14 @@ const path = require('path');
 const {main} = require('..');
 const {expect} = require('chai');
 
-describe('http-client', function() {
+describe.only('http-client', function() {
 
-  it.skip('should generate an http fetch client', async() => {
+  it('should generate an http fetch client', async() => {
     const dir = path.resolve(__dirname, 'fixtures/simple-proto-service');
+    const targetDir = path.resolve(__dirname, '../target/test-output/simple-proto-service');
     const extra = path.resolve(__dirname, 'proto');
-    const result = await main(['http-client', '--work-dir', dir, '--extra', extra, 'test.Message']);
+    const result = await main(['http-client', '--work-dir', dir, '--extra', extra, '--output', targetDir, 'test.Message']);
 
-    expect(result.stdout).to.include('test.Message');
+    expect(result.stdout).to.include('Message');
   });
 });

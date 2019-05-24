@@ -3,6 +3,7 @@ const {create} = require('@wix/proto-packages');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const {httpClient} = require('./lib/http-client-gen');
+const outputToFiles = require('./lib/output-to-files');
 
 function main(args) {
   const terminator = args.indexOf('--');
@@ -28,10 +29,22 @@ async function runPbjs(rawArgs, pbjsArgs) {
   });
 }
 
-function runHttpClientGen(rawArgs) {
+async function runHttpClientGen(rawArgs) {
   const {context, args} = createContext(rawArgs);
+  const lines = [];
 
-  return httpClient(context).generate(args._);
+  const output = outputToFiles(args['output'], {
+    log() {
+      lines.push(Array.prototype.join.call(arguments, ' '));
+    }
+  });
+
+  await httpClient(context).generate(args._, output);
+  await output.done();
+
+  return {
+    stdout: lines.join('\r\n')
+  };
 }
 
 function createContext(args) {

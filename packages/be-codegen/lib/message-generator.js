@@ -2,19 +2,27 @@ const protobuf = require('protobufjs');
 
 module.exports = {
   generateMessageUnit,
-  generateEnum
+  generateEnum,
+  generateType
 };
+
+function generateType(messageOrEnumType) {
+  if (messageOrEnumType.fields) {
+    return generateMessageUnit(messageOrEnumType);
+  } else if (messageOrEnumType.values) {
+    return generateEnum(messageOrEnumType);
+  }
+}
 
 function generateMessageUnit(messageType) {
   const jsRefs = {};
   const {jsFields} = formatMessageFields(messageType, jsRefs);
 
-  const fnCode = `${reference('MessageBuilder', 'be-proto:runtime', jsRefs)}.create()
-        ${jsFields};`;
+  const fnCode = `${reference('MessageBuilder', 'be-proto:runtime', jsRefs)}.create()\r\n${jsFields};`;
 
   return {
     name: messageType.name,
-    namespace: resolveNamespace(messageType).join('.'),
+    namespace: resolveNamespace(messageType),
     nested: collectNestedTypes(messageType),
     messageType,
     js: {
@@ -32,12 +40,11 @@ function generateEnum(enumType) {
   const jsRefs = {};
   const {jsFields} = formatEnumFields(enumType.values);
 
-  const fnCode = `${reference('EnumBuilder', 'be-proto:runtime', jsRefs)}.create()
-        ${jsFields};`;
+  const fnCode = `${reference('EnumBuilder', 'be-proto:runtime', jsRefs)}.create()${jsFields};`;
 
   return {
     name: enumType.name,
-    namespace: resolveNamespace(enumType).join('.'),
+    namespace: resolveNamespace(enumType),
     enumType,
     js: {
       refs: jsRefs,
@@ -60,11 +67,7 @@ function collectNestedTypes(node) {
   Object.keys(node.nested).forEach((name) => {
     const child = node.nested[name];
 
-    if (child instanceof protobuf.Type) {
-      nested[name] = generateMessageUnit(child);
-    } else if (child instanceof protobuf.Enum) {
-      nested[name] = generateEnum(child);
-    }
+    nested[name] = generateType(child);
   });
 
   return nested;
@@ -110,7 +113,13 @@ function reference(id, source, refs) {
   return id;
 }
 
-function resolveNamespace(node, namespace = []) {
+function resolveNamespace(node) {
+  const namespace = collectNamespace(node);
+
+  return namespace.length === 0 ? undefined : namespace.join('.');
+}
+
+function collectNamespace(node, namespace = []) {
   const parent = node.parent;
 
   if (parent) {
