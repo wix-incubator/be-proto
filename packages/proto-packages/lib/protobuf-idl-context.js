@@ -177,7 +177,9 @@ function queryTypesFor(root, typeNames) {
   const index = {}
 
   typeNames.forEach(typeName => {
-    index[typeName] = root.lookupType(typeName);
+    // console.log(typeName, root.lookup(typeName));
+
+    index[typeName] = root.lookup(typeName);
   });
 
   collectDependencies(root, Object.values(index), index);
@@ -222,12 +224,39 @@ function collectFileDependencies(root, typeSets, index) {
 function typeDepsFor(root, type, index = {}) {
   const deps = [];
 
+  typeDepsFromMethods(root, type, index, deps);
+  typeDepsFromFields(root, type, index, deps);
+
+  return _.uniq(deps);
+}
+
+function typeDepsFromMethods(root, type, index, deps) {
+  if (!type.methods) {
+    return;
+  }
+
+  Object.keys(type.methods).forEach(methodName => {
+    const method = type.methods[methodName];
+
+    const requestType = root.lookupType(method.requestType);
+    const responseType = root.lookupType(method.responseType);
+
+    // FIXME must be fully qualified names
+    index[method.requestType] = requestType;
+    index[method.responseType] = responseType;
+
+    typeDepsFromFields(root, requestType, index, deps);
+    typeDepsFromFields(root, responseType, index, deps);
+  });
+}
+
+function typeDepsFromFields(root, type, index, deps) {
+  if (!type.fields) {
+    return;
+  }
+
   Object.keys(type.fields).forEach(fieldName => {
     const {type: fieldTypeName} = type.fields[fieldName];
-
-    if (type.fields[fieldName].options) {
-      console.log(type.parent);
-    }
 
     if (!index[fieldTypeName]) {
       try {
@@ -241,8 +270,6 @@ function typeDepsFor(root, type, index = {}) {
       }
     }
   });
-
-  return _.uniq(deps);
 }
 
 function addFileDepsToIndex(namespace, filename, index) {

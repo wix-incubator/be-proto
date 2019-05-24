@@ -2,7 +2,7 @@ const {create} = require('..');
 const path = require('path');
 const {expect} = require('chai');
 
-describe('Protobuf IDL context', function() {
+describe.only('Protobuf IDL context', function() {
 
   this.timeout(10000);
 
@@ -40,6 +40,23 @@ describe('Protobuf IDL context', function() {
     expect(types[0].name).to.equal('NestedMessage');
     expect(types[1].name).to.equal('Message1');
     expect(types[2].name).to.equal('Message');
+  });
+
+  it('should lookup service types', async() => {
+    const givenContext = create({
+      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
+      packagesDirName: 'deps',
+      extraPackages: [path.join(__dirname, 'proto')]
+    });
+
+    const types = await givenContext.queryTypesFor(['test.TestService']);
+
+    expect(types[0].name).to.equal('TestService');
+    expect(types[1].name).to.equal('NestedMessage');
+    expect(types[2].name).to.equal('OtherMessage');
+    expect(types[3].name).to.equal('Message1');
+    expect(types[4].name).to.equal('Message');
+    expect(types[5].name).to.equal('UsedByOther');
   });
 
   it('should lookup dependency files', async() => {

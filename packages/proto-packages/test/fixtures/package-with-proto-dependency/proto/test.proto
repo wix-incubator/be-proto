@@ -7,6 +7,10 @@ import "dep-test.proto";
 import "used-by-other.proto";
 import "custom-field-options.proto";
 
+service TestService {
+  rpc Get(NestedMessage) returns (OtherMessage);
+}
+
 message NestedMessage {
   Message1 message1 = 1;
   dep.test.Message dep_message = 2;
