@@ -18,7 +18,9 @@ module.exports = function outputToFiles(outputDir, output = console) {
       const jsName = `${relativeBasename}.js`;
       const filepath = path.join(outputDir, jsName);
 
-      const promise = fs.outputFile(filepath, code.js.code).then(() => output.log(`== Generated ${relativeBasename}`));
+      const fileContents = fileContentsFor(code.js);
+
+      const promise = fs.outputFile(filepath, fileContents).then(() => output.log(`== Generated ${relativeBasename}`));
 
       pendingPromises.push(promise);
     },
@@ -35,3 +37,17 @@ module.exports = function outputToFiles(outputDir, output = console) {
     }
   }
 };
+
+function fileContentsFor(js) {
+  const imports = js.imports.map(({name, namespace, packageName}) => packageName ?
+    `const {${name}} = require('${packageName})';` :
+    `const {${name}} = require('${packageNameFor(namespace)})';`).join('\r\n');
+
+  return `${imports}
+
+  ${js.code}`;
+}
+
+function packageNameFor(namespace) {
+  return namespace;
+}

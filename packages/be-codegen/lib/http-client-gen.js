@@ -107,4 +107,4 @@ const builtinTypes = {
   string: {}
 };
 
-module.exports = {httpClientGen, mapImports};
+module.exports = {httpClientGen, mapImport};
