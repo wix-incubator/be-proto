@@ -8,6 +8,8 @@ describe('http-method-generator', () => {
     const givenProto = protobuf.parse(`
       syntax = "proto3";
 
+      package test;
+
       import "wix/api/http.proto";
 
       service TestService {
@@ -27,8 +29,10 @@ describe('http-method-generator', () => {
       }
     `);
 
-    const generatedMethod = generateMethod(givenProto.root.TestService.methods.Get);
+    const generatedMethod = generateMethod(givenProto.root.nested.test.TestService.methods.Get);
 
+    expect(generatedMethod.namespace).to.equal('test');
+    expect(generatedMethod.name).to.equal('TestService.Get');
     expect(generatedMethod.js.code).to.include(`http(get, '/api/v1/test', TestRequest, TestResponse)`);
   });
 

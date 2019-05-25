@@ -35,7 +35,9 @@ async function runHttpClientGen(rawArgs) {
 
   const cons = {
     log() {
-      lines.push(Array.prototype.join.call(arguments, ' '));
+      const args = Array.prototype.slice.call(arguments);
+
+      lines.push(args.map(arg => arg.toString()).join(' '));
     }
   };
 

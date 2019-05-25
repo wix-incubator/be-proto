@@ -18,7 +18,7 @@ function generateMessageUnit(messageType) {
   const jsRefs = {};
   const {jsFields} = formatMessageFields(messageType, jsRefs);
 
-  const fnCode = `${reference('MessageBuilder', null, jsRefs)}.create()\r\n${jsFields};`;
+  const fnCode = `${reference('MessageBuilder', null, jsRefs)}.create()\r\n${jsFields}`;
 
   return {
     name: messageType.name,
@@ -40,7 +40,7 @@ function generateEnum(enumType) {
   const jsRefs = {};
   const {jsFields} = formatEnumFields(enumType.values);
 
-  const fnCode = `${reference('EnumBuilder', null, jsRefs)}.create()${jsFields};`;
+  const fnCode = `${reference('EnumBuilder', null, jsRefs)}.create()${jsFields}`;
 
   return {
     name: enumType.name,

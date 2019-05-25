@@ -1,3 +1,4 @@
+const {typeUtils} = require('@wix/proto-packages');
 
 module.exports = {
   generateMethod
@@ -12,6 +13,8 @@ function generateMethod(serviceMethod) {
   const fnCode = `http(${route.method}, '${route.path}', ${requestType}, ${responseType})`;
 
   return {
+    name: `${serviceMethod.parent.name}.${serviceMethod.name}`,
+    namespace: typeUtils.resolveNamespace(serviceMethod.parent),
     js: {
       code: fnCode
     }
