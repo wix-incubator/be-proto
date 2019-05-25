@@ -2,7 +2,7 @@ const path = require('path');
 const {main} = require('..');
 const {expect} = require('chai');
 
-describe.only('http-client', function() {
+describe('http-client', function() {
 
   it('should generate an http fetch client', async() => {
     const dir = path.resolve(__dirname, 'fixtures/simple-proto-service');

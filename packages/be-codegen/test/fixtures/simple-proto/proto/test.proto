@@ -5,3 +5,7 @@ package test;
 message Message {
   string name = 1;
 }
+
+message NestedMessage {
+  Message message = 1;
+}

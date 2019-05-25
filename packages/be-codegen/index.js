@@ -2,7 +2,7 @@ const minimist = require('minimist');
 const {create} = require('@wix/proto-packages');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
-const {httpClient} = require('./lib/http-client-gen');
+const {httpClientGen} = require('./lib/http-client-gen');
 const outputToFiles = require('./lib/output-to-files');
 
 function main(args) {
@@ -39,7 +39,7 @@ async function runHttpClientGen(rawArgs) {
     }
   });
 
-  await httpClient(context).generate(args._, output);
+  await httpClientGen(context).generate(args._, output);
   await output.done();
 
   return {

@@ -27,7 +27,6 @@ describe('message-generator', () => {
 
     expect(_.sortBy(Object.keys(generatedMessage.js.refs))).to.deep.equal(['MessageBuilder', 'int64', 'string']);
     expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
-      source: 'be-proto:runtime',
       id: 'MessageBuilder'
     });
   });
@@ -74,7 +73,6 @@ describe('message-generator', () => {
       source: givenProto.root.TestMessage
     });
     expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
-      source: 'be-proto:runtime',
       id: 'MessageBuilder'
     });
   });

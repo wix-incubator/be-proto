@@ -2,7 +2,7 @@ const {create} = require('..');
 const path = require('path');
 const {expect} = require('chai');
 
-describe.only('Protobuf IDL context', function() {
+describe('Protobuf IDL context', function() {
 
   this.timeout(10000);
 
@@ -88,5 +88,26 @@ describe.only('Protobuf IDL context', function() {
       namespace: 'dep.test',
       fullyQualifiedName: 'dep.test.Message'
     });
+  });
+
+  it('should fail resolve name', async() => {
+    const givenContext = create({
+      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
+      packagesDirName: 'deps',
+      extraPackages: [path.join(__dirname, 'proto')]
+    });
+
+    const type = await givenContext.lookupType('test.NestedMessage');
+
+    let error;
+
+    try {
+     await givenContext.resolveName(type, 'test.Unknown');
+    } catch(e) {
+      error = e;
+    }
+
+    expect(error).to.instanceOf(Error);
+    expect(error.message).to.include(`Unknown type "test.Unknown"`);
   });
 });

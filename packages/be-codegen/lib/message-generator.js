@@ -18,7 +18,7 @@ function generateMessageUnit(messageType) {
   const jsRefs = {};
   const {jsFields} = formatMessageFields(messageType, jsRefs);
 
-  const fnCode = `${reference('MessageBuilder', 'be-proto:runtime', jsRefs)}.create()\r\n${jsFields};`;
+  const fnCode = `${reference('MessageBuilder', null, jsRefs)}.create()\r\n${jsFields};`;
 
   return {
     name: messageType.name,
@@ -40,7 +40,7 @@ function generateEnum(enumType) {
   const jsRefs = {};
   const {jsFields} = formatEnumFields(enumType.values);
 
-  const fnCode = `${reference('EnumBuilder', 'be-proto:runtime', jsRefs)}.create()${jsFields};`;
+  const fnCode = `${reference('EnumBuilder', null, jsRefs)}.create()${jsFields};`;
 
   return {
     name: enumType.name,
@@ -78,7 +78,7 @@ function formatMessageFields(messageType, jsRefs) {
 
   Object.values(messageType.fields).forEach((field) => {
     const fieldMethod = field.repeated ? 'repeated' : 'field';
-    const fieldModifier = field.partOf ? `${reference('oneOf', 'be-proto:runtime', jsRefs)}('${field.partOf.name}', ${field.id})` : field.id;
+    const fieldModifier = field.partOf ? `${reference('oneOf', null, jsRefs)}('${field.partOf.name}', ${field.id})` : field.id;
 
     const source = messageType;
 
@@ -123,7 +123,7 @@ function collectNamespace(node, namespace = []) {
   const parent = node.parent;
 
   if (parent) {
-    if (parent instanceof protobuf.Namespace && parent.name > '') {
+    if (parent.name > '') {
       namespace.unshift(parent.name);
     }
 

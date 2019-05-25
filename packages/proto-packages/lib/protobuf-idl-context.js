@@ -192,6 +192,11 @@ function queryTypesFor(root, typeNames) {
 
 function resolveName(root, node, name) {
   const type = node.lookup(name);
+
+  if (!type) {
+    throw new Error(`Unknown type "${name}"`)
+  }
+
   const namespace = resolveNamespace(type);
 
   return {

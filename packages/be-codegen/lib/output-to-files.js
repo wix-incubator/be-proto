@@ -6,7 +6,7 @@ module.exports = function outputToFiles(outputDir, output = console) {
   let fulfillCallback;
 
   const pendingPromises = [];
-  const completePromise = new Promise((fulfill, reject) => {
+  const completePromise = new Promise((fulfill) => {
     fulfillCallback = fulfill;
   })
 
@@ -24,7 +24,7 @@ module.exports = function outputToFiles(outputDir, output = console) {
       fulfillCallback();
     },
     async done() {
-      await fulfillCallback();
+      await completePromise;
       await Promise.all(pendingPromises);
       output.log('== Complete');
     }
