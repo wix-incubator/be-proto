@@ -3,7 +3,7 @@ const protobuf = require('protobufjs');
 const {expect} = require('chai');
 const _ = require('lodash');
 
-describe.only('message-generator', () => {
+describe('message-generator', () => {
 
   it('should generate a message', () => {
     const givenProto = protobuf.parse(`
