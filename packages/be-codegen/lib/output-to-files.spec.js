@@ -22,7 +22,7 @@ describe('output-to-files', () => {
 
     const lines = toRequireLines(givenImports, '.');
 
-    expect(lines[0]).to.equal(`const obj = require('./test.ns/obj');`);
+    expect(lines[0]).to.equal(`const {obj} = require('./test.ns/obj');`);
   });
 
   it('should require internal object relatively', () => {
@@ -33,6 +33,6 @@ describe('output-to-files', () => {
 
     const lines = toRequireLines(givenImports, 'test.ns2/obj');
 
-    expect(lines[0]).to.equal(`const obj = require('../test.ns/obj');`);
+    expect(lines[0]).to.equal(`const {obj} = require('../test.ns/obj');`);
   });
 });

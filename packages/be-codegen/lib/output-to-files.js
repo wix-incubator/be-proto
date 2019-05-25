@@ -24,7 +24,6 @@ function outputToFiles(outputDir, output = console) {
       const filepath = path.join(outputDir, jsName);
 
       const fileContents = fileContentsFor(code.js, jsName);
-
       const promise = fs.outputFile(filepath, fileContents).then(() => output.log(`== Generated ${relativeBasename}`));
 
       pendingPromises.push(promise);
@@ -54,7 +53,7 @@ function fileContentsFor(js, contextPath) {
 function toRequireLines(jsImports, contextPath) {
   return jsImports.map(({name, namespace, packageName}) => packageName ?
     `const {${name}} = require('${packageName}');` :
-    `const ${name} = require('${packageNameFor(namespace, contextPath)}/${name}');`);
+    `const {${name}} = require('${packageNameFor(namespace, contextPath)}/${name}');`);
 }
 
 function packageNameFor(namespace, contextPath) {

@@ -64,21 +64,15 @@ async function formatDescriptors(context, type) {
 }
 
 function formatMessageCode(type, messageDesc) {
-  const messageCode = `
-    module.exports = {
-      get ${type.name}: lazy(() => define${type.name}())
-    }
-
-    function define${type.name}() {
-      return ${messageDesc.js.code}
-      .build();
-    }`
-
-  return messageCode;
+  return `module.exports = {
+      get ${type.name}: lazy(() => ${messageDesc.js.code}.build())
+    }`;
 }
 
 function formatMethodCode(methodDesc) {
-  return  `module.exports = ${methodDesc.js.code};`;
+  return `module.exports = {
+    get ${methodDesc.name}: lazy(() => ${methodDesc.js.code})
+  }`
 }
 
 function mapImports(context, desc) {
