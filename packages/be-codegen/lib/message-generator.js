@@ -1,4 +1,4 @@
-const protobuf = require('protobufjs');
+const {typeUtils} = require('@wix/proto-packages');
 
 module.exports = {
   generateMessageUnit,
@@ -22,7 +22,7 @@ function generateMessageUnit(messageType) {
 
   return {
     name: messageType.name,
-    namespace: resolveNamespace(messageType),
+    namespace: typeUtils.resolveNamespace(messageType),
     nested: collectNestedTypes(messageType),
     messageType,
     js: {
@@ -44,7 +44,7 @@ function generateEnum(enumType) {
 
   return {
     name: enumType.name,
-    namespace: resolveNamespace(enumType),
+    namespace: typeUtils.resolveNamespace(enumType),
     enumType,
     js: {
       refs: jsRefs,
@@ -111,24 +111,4 @@ function reference(id, source, refs) {
   };
 
   return id;
-}
-
-function resolveNamespace(node) {
-  const namespace = collectNamespace(node);
-
-  return namespace.length === 0 ? undefined : namespace.join('.');
-}
-
-function collectNamespace(node, namespace = []) {
-  const parent = node.parent;
-
-  if (parent) {
-    if (parent.name > '') {
-      namespace.unshift(parent.name);
-    }
-
-    resolveNamespace(parent, namespace);
-  }
-
-  return namespace;
 }

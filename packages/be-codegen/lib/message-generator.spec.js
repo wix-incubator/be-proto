@@ -3,7 +3,7 @@ const protobuf = require('protobufjs');
 const {expect} = require('chai');
 const _ = require('lodash');
 
-describe('message-generator', () => {
+describe.only('message-generator', () => {
 
   it('should generate a message', () => {
     const givenProto = protobuf.parse(`
@@ -27,7 +27,8 @@ describe('message-generator', () => {
 
     expect(_.sortBy(Object.keys(generatedMessage.js.refs))).to.deep.equal(['MessageBuilder', 'int64', 'string']);
     expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
-      id: 'MessageBuilder'
+      id: 'MessageBuilder',
+      source: null
     });
   });
 
@@ -73,7 +74,8 @@ describe('message-generator', () => {
       source: givenProto.root.TestMessage
     });
     expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
-      id: 'MessageBuilder'
+      id: 'MessageBuilder',
+      source: null
     });
   });
 
