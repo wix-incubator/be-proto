@@ -40,7 +40,12 @@ async function runHttpClientGen(rawArgs) {
   });
 
   await httpClientGen(context).generate(args._, output);
-  await output.done();
+
+  try {
+    await output.done();
+  } catch(e) {
+    output.log('ERROR:', e);
+  }
 
   return {
     stdout: lines.join('\r\n')

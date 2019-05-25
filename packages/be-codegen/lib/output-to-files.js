@@ -4,10 +4,12 @@ const path = require('path');
 module.exports = function outputToFiles(outputDir, output = console) {
 
   let fulfillCallback;
+  let rejectCallback;
 
   const pendingPromises = [];
-  const completePromise = new Promise((fulfill) => {
+  const completePromise = new Promise((fulfill, reject) => {
     fulfillCallback = fulfill;
+    rejectCallback = reject;
   })
 
   return {
@@ -19,6 +21,9 @@ module.exports = function outputToFiles(outputDir, output = console) {
       const promise = fs.outputFile(filepath, code.js.code).then(() => output.log(`== Generated ${relativeBasename}`));
 
       pendingPromises.push(promise);
+    },
+    error(e) {
+      rejectCallback(e);
     },
     complete() {
       fulfillCallback();
