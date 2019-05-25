@@ -3,7 +3,7 @@ const TrieSearch = require('trie-search');
 const klaw = require('klaw-promise');
 const path = require('path');
 const _ = require('lodash');
-const fs = require('fs-promise');
+const fs = require('fs-extra');
 const {resolveNamespace} = require('./type-utils');
 
 function create(options) {
@@ -19,7 +19,7 @@ function create(options) {
     lookupType: readyContextMethod((context) => context.lookupType),
     protoFiles: readyContextMethod((context) => context.protoFiles),
     queryTypesFor: readyContextMethod((context) => context.queryTypesFor),
-    resolveName: readyContextMethod((context) => context.resolveName),
+    resolve: readyContextMethod((context) => context.resolve),
     files: readyContextMethod((context) => context.loadedFiles)
   };
 
@@ -40,15 +40,13 @@ function create(options) {
   }
 
   async function resolveRoot() {
-    const roots = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
+    const {roots, packageFiles} = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
 
-    // const extraRootEntries = await Promise.all(extraRoots.map(root => resolveProtoFilesInDir(root).then(files => ({root, files}))));
-
-    // extraRootEntries.forEach(({root, files}) => {
-    //   roots[root] = files;
-    // });
-
-    return new ResolutionRoot({origin: contextDir, roots});
+    return new ResolutionRoot({
+      origin: contextDir,
+      roots,
+      packageFilesAnalyzing: analyzePackageFiles(packageFiles)
+    });
   }
 }
 
@@ -56,6 +54,7 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
   const result = await klaw(contextDir, { preserveSymlinks: true });
 
   const protoFiles = [];
+  const packageFiles = [];
   const packageDirs = extraPackages;
   const links = [];
   const origin = contextDir;
@@ -70,6 +69,7 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
         path: fs.path
       });
     } else if (path.basename(fs.path) === 'package.json') {
+      packageFiles.push(fs.path);
       packageDirs.push(path.dirname(fs.path));
     }
   });
@@ -89,7 +89,7 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
     roots[root] = ts.get(root).map((entry) => path.relative(root, entry.path));
   });
 
-  return roots;
+  return {roots, packageFiles};
 }
 
 async function collectProtofilesTo(dirs, protoFiles) {
@@ -104,6 +104,33 @@ async function collectProtofilesTo(dirs, protoFiles) {
       }
     });
   }));
+}
+
+async function analyzePackageFiles(packageFiles) {
+  const beProtoPackages = {};
+
+  await Promise.all(packageFiles.map(async(packageFile) => {
+    const pkg = JSON.parse(await fs.readFile(packageFile));
+    const beProtoMeta = pkg['@wix/be-proto'];
+
+    if (beProtoMeta) {
+      const beProtoDirs = Array.isArray(beProtoMeta.exports) ? beProtoMeta.exports : [beProtoMeta.exports];
+
+      const existingFiles = (await Promise.all(beProtoDirs.map((dir) => path.join(path.dirname(packageFile), dir, 'be-proto.json')).map((filepath) =>
+        fs.exists(filepath).then((result) => result ? filepath : null)))).filter((path) => path);
+
+      const exports = await Promise.all(existingFiles.map(async(filepath) => ({
+        baseDir: path.dirname(filepath),
+        metadata: JSON.parse(await fs.readFile(filepath))
+      })));
+
+      beProtoPackages[pkg.name] = {
+        exports
+      };
+    }
+  }));
+
+  return beProtoPackages;
 }
 
 async function resolveProtoDirs(packageDirs, sourceRoots) {
@@ -140,13 +167,14 @@ class ResolutionRoot extends pbjs.Root {
 
     this._targets = targets;
     this._reverseTargets = _.invert(targets);
+    this._packageFilesAnalyzing = opts.packageFilesAnalyzing;
   }
 
   async loadContext() {
     const root = await super.load(this.protoFiles());
 
     root.queryTypesFor = (args) => queryTypesFor(root, args);
-    root.resolveName = (node, name) => resolveName(root, node, name);
+    root.resolve = (node, name) => resolve(root, node, name);
 
     return root;
   }
@@ -174,6 +202,51 @@ class ResolutionRoot extends pbjs.Root {
       return path.resolve(origin, target);
     }
   }
+
+  async exportsFor(namespace, name) {
+    const exportsByTypes = await this.resolveExports();
+    const exportedMeta = exportsByTypes[`${namespace}.${name}`];
+
+    if (!exportedMeta) {
+      return {};
+    }
+
+    const {packageName, target} = exportedMeta;
+
+    return {
+      [packageName]: {
+        target
+      }
+    };
+  }
+
+  async resolveExports() {
+    if (this._exportsByTypes) {
+      return this._exportsByTypes;
+    }
+
+    const exports = await this._packageFilesAnalyzing;
+    const exportsByTypes = {};
+
+    Object.keys(exports).forEach((packageName) => {
+      exports[packageName].exports.forEach(({baseDir, metadata}) => {
+        Object.keys(metadata).forEach((targetName) => {
+          const types = metadata[targetName];
+
+          types.forEach(typeName => {
+            exportsByTypes[typeName] = {
+              target: targetName,
+              packageName
+            };
+          });
+        });
+      });
+    });
+
+    this._exportsByTypes = exportsByTypes;
+
+    return this._exportsByTypes;
+  }
 }
 
 function queryTypesFor(root, typeNames) {
@@ -190,11 +263,11 @@ function queryTypesFor(root, typeNames) {
   return Object.values(index);
 }
 
-function resolveName(root, node, name) {
+async function resolve(root, node, name) {
   const type = node.lookup(name);
 
   if (!type) {
-    throw new Error(`Unknown type "${name}"`)
+    throw new Error(`Unknown type "${name}"`);
   }
 
   const namespace = resolveNamespace(type);
@@ -202,7 +275,8 @@ function resolveName(root, node, name) {
   return {
     name: type.name,
     namespace,
-    fullyQualifiedName: `${namespace}.${type.name}`
+    fullyQualifiedName: `${namespace}.${type.name}`,
+    exports: await root.exportsFor(namespace, type.name)
   };
 }
 

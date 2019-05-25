@@ -29,11 +29,7 @@ describe('Protobuf IDL context', function() {
   });
 
   it('should lookup dependency types', async() => {
-    const givenContext = create({
-      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
-      packagesDirName: 'deps',
-      extraPackages: [path.join(__dirname, 'proto')]
-    });
+    const givenContext = aContext('package-with-proto-dependency');
 
     const types = await givenContext.queryTypesFor(['test.NestedMessage']);
 
@@ -43,11 +39,7 @@ describe('Protobuf IDL context', function() {
   });
 
   it('should lookup service types', async() => {
-    const givenContext = create({
-      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
-      packagesDirName: 'deps',
-      extraPackages: [path.join(__dirname, 'proto')]
-    });
+    const givenContext = aContext('package-with-proto-dependency');
 
     const types = await givenContext.queryTypesFor(['test.TestService']);
 
@@ -60,11 +52,7 @@ describe('Protobuf IDL context', function() {
   });
 
   it('should lookup dependency files', async() => {
-    const givenContext = create({
-      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
-      packagesDirName: 'deps',
-      extraPackages: [path.join(__dirname, 'proto')]
-    });
+    const givenContext = aContext('package-with-proto-dependency');
 
     const files = await givenContext.files();
 
@@ -73,36 +61,42 @@ describe('Protobuf IDL context', function() {
   });
 
   it('should resolve name', async() => {
-    const givenContext = create({
-      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
-      packagesDirName: 'deps',
-      extraPackages: [path.join(__dirname, 'proto')]
-    });
+    const givenContext = aContext('package-with-proto-dependency');
 
     const type = await givenContext.lookupType('test.NestedMessage');
 
-    const result = await givenContext.resolveName(type, 'dep.test.Message');
+    const result = await givenContext.resolve(type, 'dep.test.Message');
 
     expect(result).to.deep.equal({
+      exports: {},
       name: 'Message',
       namespace: 'dep.test',
       fullyQualifiedName: 'dep.test.Message'
     });
   });
 
-  it('should fail resolve name', async() => {
-    const givenContext = create({
-      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
-      packagesDirName: 'deps',
-      extraPackages: [path.join(__dirname, 'proto')]
+  it('should find exports', async() => {
+    const givenContext = aContext('package-with-proto-exports');
+
+    const type = await givenContext.lookupType('test.NestedMessage');
+    const typeMeta = await givenContext.resolve(type, 'dep.test.Message');
+
+    expect(typeMeta.exports).to.deep.equal({
+      "@wix/exporting-package": {
+        target: "target-1"
+      }
     });
+  });
+
+  it('should fail resolve name', async() => {
+    const givenContext = aContext('package-with-proto-dependency');
 
     const type = await givenContext.lookupType('test.NestedMessage');
 
     let error;
 
     try {
-     await givenContext.resolveName(type, 'test.Unknown');
+     await givenContext.resolve(type, 'test.Unknown');
     } catch(e) {
       error = e;
     }
@@ -110,4 +104,12 @@ describe('Protobuf IDL context', function() {
     expect(error).to.instanceOf(Error);
     expect(error.message).to.include(`Unknown type "test.Unknown"`);
   });
+
+  function aContext(contextName) {
+    return create({
+      contextDir: path.join(__dirname, `fixtures/${contextName}`),
+      packagesDirName: 'deps',
+      extraPackages: [path.join(__dirname, 'proto')]
+    });
+  }
 });

@@ -1,0 +1,6 @@
+{
+  "name": "@wix/exporting-package",
+  "@wix/be-proto": {
+    "exports": "./exported-dir"
+  }
+}

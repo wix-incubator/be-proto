@@ -83,7 +83,7 @@ function mapImports(context, desc) {
 
 async function mapImport(context, name, ref) {
   if (ref.source && !builtinTypes[name]) {
-    const {namespace, name} = await context.resolveName(ref.source, ref.id);
+    const {namespace, name} = await context.resolve(ref.source, ref.id);
 
     return {
       name,
