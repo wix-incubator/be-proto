@@ -1,7 +1,12 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-module.exports = function outputToFiles(outputDir, output = console) {
+module.exports = {
+  outputToFiles,
+  toRequireLines
+};
+
+function outputToFiles(outputDir, output = console) {
 
   let fulfillCallback;
   let rejectCallback;
@@ -18,7 +23,7 @@ module.exports = function outputToFiles(outputDir, output = console) {
       const jsName = `${relativeBasename}.js`;
       const filepath = path.join(outputDir, jsName);
 
-      const fileContents = fileContentsFor(code.js);
+      const fileContents = fileContentsFor(code.js, jsName);
 
       const promise = fs.outputFile(filepath, fileContents).then(() => output.log(`== Generated ${relativeBasename}`));
 
@@ -38,16 +43,22 @@ module.exports = function outputToFiles(outputDir, output = console) {
   }
 };
 
-function fileContentsFor(js) {
-  const imports = js.imports.map(({name, namespace, packageName}) => packageName ?
-    `const {${name}} = require('${packageName})';` :
-    `const {${name}} = require('${packageNameFor(namespace)})';`).join('\r\n');
+function fileContentsFor(js, contextPath) {
+  const imports = toRequireLines(js.imports, contextPath).join('\r\n');
 
   return `${imports}
 
   ${js.code}`;
 }
 
-function packageNameFor(namespace) {
-  return namespace;
+function toRequireLines(jsImports, contextPath) {
+  return jsImports.map(({name, namespace, packageName}) => packageName ?
+    `const {${name}} = require('${packageName}');` :
+    `const ${name} = require('${packageNameFor(namespace, contextPath)}/${name}');`);
+}
+
+function packageNameFor(namespace, contextPath) {
+  const relativePath = path.relative(path.dirname(contextPath), namespace);
+
+  return relativePath.startsWith('.') || relativePath.startsWith('/') ? relativePath : `./${relativePath}`;
 }

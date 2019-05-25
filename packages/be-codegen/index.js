@@ -3,7 +3,7 @@ const {create} = require('@wix/proto-packages');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const {httpClientGen} = require('./lib/http-client-gen');
-const outputToFiles = require('./lib/output-to-files');
+const {outputToFiles} = require('./lib/output-to-files');
 
 function main(args) {
   const terminator = args.indexOf('--');
