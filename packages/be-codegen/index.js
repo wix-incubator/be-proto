@@ -33,18 +33,20 @@ async function runHttpClientGen(rawArgs) {
   const {context, args} = createContext(rawArgs);
   const lines = [];
 
-  const output = outputToFiles(args['output'], {
+  const cons = {
     log() {
       lines.push(Array.prototype.join.call(arguments, ' '));
     }
-  });
+  };
+
+  const output = outputToFiles(args['output'], cons);
 
   await httpClientGen(context).generate(args._, output);
 
   try {
     await output.done();
   } catch(e) {
-    output.log('ERROR:', e);
+    cons.log('ERROR:', e);
   }
 
   return {
