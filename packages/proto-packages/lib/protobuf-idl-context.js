@@ -4,6 +4,7 @@ const klaw = require('klaw-promise');
 const path = require('path');
 const _ = require('lodash');
 const fs = require('fs-promise');
+const {resolveNamespace} = require('./type-utils');
 
 function create(options) {
 
@@ -18,6 +19,7 @@ function create(options) {
     lookupType: readyContextMethod((context) => context.lookupType),
     protoFiles: readyContextMethod((context) => context.protoFiles),
     queryTypesFor: readyContextMethod((context) => context.queryTypesFor),
+    resolveName: readyContextMethod((context) => context.resolveName),
     files: readyContextMethod((context) => context.loadedFiles)
   };
 
@@ -144,6 +146,7 @@ class ResolutionRoot extends pbjs.Root {
     const root = await super.load(this.protoFiles());
 
     root.queryTypesFor = (args) => queryTypesFor(root, args);
+    root.resolveName = (node, name) => resolveName(root, node, name);
 
     return root;
   }
@@ -185,6 +188,17 @@ function queryTypesFor(root, typeNames) {
   collectDependencies(root, Object.values(index), index);
 
   return Object.values(index);
+}
+
+function resolveName(root, node, name) {
+  const type = node.lookup(name);
+  const namespace = resolveNamespace(type);
+
+  return {
+    name: type.name,
+    namespace,
+    fullyQualifiedName: `${namespace}.${type.name}`
+  };
 }
 
 function collectDependencies(root, types, index) {

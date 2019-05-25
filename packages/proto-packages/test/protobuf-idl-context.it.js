@@ -71,4 +71,22 @@ describe.only('Protobuf IDL context', function() {
     expect(files.join()).to.include('used-by-other.proto');
     expect(files.join()).to.include('custom-field-options.proto');
   });
+
+  it('should resolve name', async() => {
+    const givenContext = create({
+      contextDir: path.join(__dirname, 'fixtures/package-with-proto-dependency'),
+      packagesDirName: 'deps',
+      extraPackages: [path.join(__dirname, 'proto')]
+    });
+
+    const type = await givenContext.lookupType('test.NestedMessage');
+
+    const result = await givenContext.resolveName(type, 'dep.test.Message');
+
+    expect(result).to.deep.equal({
+      name: 'Message',
+      namespace: 'dep.test',
+      fullyQualifiedName: 'dep.test.Message'
+    });
+  });
 });
