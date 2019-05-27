@@ -1,6 +1,7 @@
 {
   "name": "@wix/exporting-package",
+  "main": "lib/index.js",
   "@wix/be-proto": {
-    "exports": "./exported-dir"
+    "exports": "./lib/exported-dir"
   }
 }

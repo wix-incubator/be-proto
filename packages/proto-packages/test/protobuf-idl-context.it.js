@@ -82,8 +82,9 @@ describe('Protobuf IDL context', function() {
     const typeMeta = await givenContext.resolve(type, 'dep.test.Message');
 
     expect(typeMeta.exports).to.deep.equal({
-      "@wix/exporting-package": {
-        target: "target-1"
+      '@wix/exporting-package': {
+        target: 'target-1',
+        pathInPackage: 'exported-dir'
       }
     });
   });

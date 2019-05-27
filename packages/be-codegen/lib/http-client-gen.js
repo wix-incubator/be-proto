@@ -83,12 +83,7 @@ function mapImports(context, desc) {
 
 async function mapImport(context, name, ref) {
   if (ref.source && !builtinTypes[name]) {
-    const {namespace, name} = await context.resolve(ref.source, ref.id);
-
-    return {
-      name,
-      namespace
-    };
+    return mapLocalImport(await context.resolve(ref.source, ref.id));
   } else {
     return {
       name,
@@ -97,8 +92,28 @@ async function mapImport(context, name, ref) {
   }
 }
 
+function mapLocalImport({namespace, name, exports}) {
+  if (exports) {
+    const exportedBy = Object.keys(exports)[0];
+
+    if (exportedBy) {
+      const {pathInPackage} = exports[exportedBy];
+
+      return {
+        name,
+        packageName: `${exportedBy}/${pathInPackage}/${namespace}/${name}`
+      };
+    }
+  }
+
+  return {
+    namespace,
+    name
+  };
+}
+
 const builtinTypes = {
   string: {}
 };
 
-module.exports = {httpClientGen, mapImport};
+module.exports = {httpClientGen, mapImport, mapLocalImport};

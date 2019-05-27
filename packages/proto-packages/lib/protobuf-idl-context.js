@@ -112,20 +112,22 @@ async function analyzePackageFiles(packageFiles) {
   await Promise.all(packageFiles.map(async(packageFile) => {
     const pkg = JSON.parse(await fs.readFile(packageFile));
     const beProtoMeta = pkg['@wix/be-proto'];
+    const packageDir = path.dirname(packageFile);
 
     if (beProtoMeta) {
       const beProtoDirs = Array.isArray(beProtoMeta.exports) ? beProtoMeta.exports : [beProtoMeta.exports];
 
-      const existingFiles = (await Promise.all(beProtoDirs.map((dir) => path.join(path.dirname(packageFile), dir, 'be-proto.json')).map((filepath) =>
+      const existingFiles = (await Promise.all(beProtoDirs.map((dir) => path.join(packageDir, dir, 'be-proto.json')).map((filepath) =>
         fs.exists(filepath).then((result) => result ? filepath : null)))).filter((path) => path);
 
       const exports = await Promise.all(existingFiles.map(async(filepath) => ({
-        baseDir: path.dirname(filepath),
-        metadata: JSON.parse(await fs.readFile(filepath))
+        pathInPackage: path.relative(packageDir, path.dirname(filepath)),
+        metadata: JSON.parse(await fs.readFile(filepath)),
       })));
 
       beProtoPackages[pkg.name] = {
-        exports
+        exports,
+        packageInfo: pkg
       };
     }
   }));
@@ -215,7 +217,8 @@ class ResolutionRoot extends pbjs.Root {
 
     return {
       [packageName]: {
-        target
+        target,
+        pathInPackage: exportedMeta.pathInPackage
       }
     };
   }
@@ -229,14 +232,17 @@ class ResolutionRoot extends pbjs.Root {
     const exportsByTypes = {};
 
     Object.keys(exports).forEach((packageName) => {
-      exports[packageName].exports.forEach(({baseDir, metadata}) => {
+      const mainFile = exports[packageName].packageInfo.main || 'index.js';
+
+      exports[packageName].exports.forEach(({metadata, pathInPackage}) => {
         Object.keys(metadata).forEach((targetName) => {
           const types = metadata[targetName];
 
           types.forEach(typeName => {
             exportsByTypes[typeName] = {
               target: targetName,
-              packageName
+              packageName,
+              pathInPackage: path.relative(path.dirname(mainFile), pathInPackage)
             };
           });
         });
