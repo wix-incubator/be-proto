@@ -79,6 +79,37 @@ describe('message-generator', () => {
     });
   });
 
+  it('should reference another message on an explicit namespace', () => {
+    const givenProto = protobuf.parse(`
+      syntax = "proto3";
+
+      package a;
+
+      message TestMessage {
+        a.TestMessage2 msg = 1;
+      }
+
+      message TestMessage2 {
+        TestMessage msg = 1;
+      }
+    `);
+
+    const generatedMessage = generateMessageUnit(givenProto.root.nested.a.TestMessage);
+
+    expect(generatedMessage.js.code).to.include(`MessageBuilder`);
+    expect(generatedMessage.js.code).to.include(`.field('msg', TestMessage2, 1)`);
+
+    expect(generatedMessage.js.refs['a.TestMessage2']).to.deep.equal({
+      id: 'a.TestMessage2',
+      name: 'TestMessage2',
+      source: givenProto.root.nested.a.TestMessage
+    });
+    expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
+      id: 'MessageBuilder',
+      source: null
+    });
+  });
+
   it('should generate int enum', () => {
     const givenProto = protobuf.parse(`
       syntax = "proto3";
