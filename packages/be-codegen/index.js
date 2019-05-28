@@ -69,7 +69,7 @@ function createContext(args) {
     context: create({
       contextDir: workDir,
       sourceRoots,
-      extraPackages: [extra]
+      extraPackages: extra ? [extra] : []
     })
   };
 }

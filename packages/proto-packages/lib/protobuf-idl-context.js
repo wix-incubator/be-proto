@@ -50,14 +50,13 @@ function create(options) {
   }
 }
 
-async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages  ) {
+async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages) {
   const result = await klaw(contextDir, { preserveSymlinks: true });
 
   const protoFiles = [];
   const packageFiles = [];
-  const packageDirs = extraPackages;
+  const packageDirs = extraPackages.slice();
   const links = [];
-  const origin = contextDir;
 
   await collectProtofilesTo(extraPackages, protoFiles);
 
@@ -82,7 +81,7 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
 
   const roots = {};
 
-  roots[origin] = _.filter(ts.get(origin).map((entry) => path.relative(origin, entry.path)), entry =>
+  roots[contextDir] = _.filter(ts.get(contextDir).map((entry) => path.relative(contextDir, entry.path)), entry =>
     !belongsTo(entry, [packagesDirName]) && belongsTo(entry, sourceRoots));
 
   existingRoots.forEach(root => {
@@ -301,8 +300,6 @@ function collectDependencies(root, types, index) {
 }
 
 function collectFileDependencies(root, typeSets, index) {
-  console.log(root.getFiles());
-
   if (typeSets.length === 0) {
     return;
   }

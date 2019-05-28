@@ -26,6 +26,7 @@ describe('Protobuf IDL context', function() {
     const TestMessage = await givenContext.lookupType('test.Message');
 
     expect(TestMessage.create({ name: 'John' }).name).to.equal('John');
+    expect((await givenContext.files()).join()).to.not.include('ignored.proto');
   });
 
   it('should lookup dependency types', async() => {
