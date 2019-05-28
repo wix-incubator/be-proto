@@ -6,11 +6,14 @@ function httpClientGen(context) {
     async generate(typeNames, output) {
       try {
         const types = await context.queryTypesFor(typeNames);
+        const exportedTypes = [];
 
         await Promise.all(types.map(async(type) => {
           const descriptors = await formatDescriptors(context, type);
 
-          descriptors.forEach((desc) =>
+          descriptors.forEach((desc) => {
+            exportedTypes.push(formatTypeName(desc));
+
             output.add({
               namespace: desc.namespace,
               name: desc.name,
@@ -18,8 +21,16 @@ function httpClientGen(context) {
                 imports: desc.js.imports,
                 code: desc.js.code
               }
-          }));
+            });
+          });
         }));
+
+        output.add({
+          name: 'be-proto',
+          json: {
+            '@wix/be-http-client': exportedTypes
+          }
+        });
 
         output.complete();
       } catch(e) {
@@ -110,6 +121,10 @@ function mapLocalImport({namespace, name, exports}) {
     namespace,
     name
   };
+}
+
+function formatTypeName(descriptor) {
+  return descriptor.namespace ? `${descriptor.namespace}.${descriptor.name}` : descriptor.name;
 }
 
 const builtinTypes = {

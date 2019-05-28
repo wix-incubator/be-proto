@@ -20,10 +20,11 @@ function outputToFiles(outputDir, output = console) {
   return {
     add(code) {
       const relativeBasename = code.namespace ? `${code.namespace}/${code.name}` : `${code.name}`;
-      const jsName = `${relativeBasename}.js`;
-      const filepath = path.join(outputDir, jsName);
+      const extension = code.json ? 'json' : (code.js ? 'js' : 'js');
+      const filename = `${relativeBasename}.${extension}`;
+      const filepath = path.join(outputDir, filename);
 
-      const fileContents = fileContentsFor(code.js, jsName);
+      const fileContents = fileContentsFor(code, filename, extension);
       const promise = fs.outputFile(filepath, fileContents).then(() => output.log(`== Generated ${relativeBasename}`));
 
       pendingPromises.push(promise);
@@ -42,12 +43,16 @@ function outputToFiles(outputDir, output = console) {
   }
 };
 
-function fileContentsFor(js, contextPath) {
-  const imports = toRequireLines(js.imports, contextPath).join('\r\n');
+function fileContentsFor(code, contextPath, extension) {
+  if (extension === 'js') {
+    const imports = toRequireLines(code.js.imports, contextPath).join('\r\n');
 
-  return `${imports}
+    return `${imports}
 
-  ${js.code}`;
+    ${code.js.code}`;
+  } else if (extension === 'json') {
+    return JSON.stringify(code.json);
+  }
 }
 
 function toRequireLines(jsImports, contextPath) {

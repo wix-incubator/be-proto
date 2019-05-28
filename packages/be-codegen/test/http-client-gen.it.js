@@ -33,7 +33,8 @@ describe('http-client-gen', () => {
     expect(output.entryFor('test.Message').js.imports).to.include.something.that.deep.equals({
       name: 'string',
       packageName: '@wix/be-http-client'
-    });;
+    });
+    expect(output.entryFor('be-proto').json).to.have.property('@wix/be-http-client');
   });
 
   function testOutput() {
