@@ -64,5 +64,9 @@ function toRequireLines(jsImports, contextPath) {
 function packageNameFor(namespace, contextPath) {
   const relativePath = path.relative(path.dirname(contextPath), namespace);
 
+  if (relativePath === '') {
+    return '.';
+  }
+
   return relativePath.startsWith('.') || relativePath.startsWith('/') ? relativePath : `./${relativePath}`;
 }

@@ -20,7 +20,8 @@ function create(options) {
     protoFiles: readyContextMethod((context) => context.protoFiles),
     queryTypesFor: readyContextMethod((context) => context.queryTypesFor),
     resolve: readyContextMethod((context) => context.resolve),
-    files: readyContextMethod((context) => context.loadedFiles)
+    files: readyContextMethod((context) => context.loadedFiles),
+    loadedContext: readyContextMethod((context) => context.self)
   };
 
   function readyContextMethod(getMethod) {
@@ -176,6 +177,7 @@ class ResolutionRoot extends pbjs.Root {
 
     root.queryTypesFor = (args) => queryTypesFor(root, args);
     root.resolve = (node, name) => resolve(root, node, name);
+    root.self = () => root;
 
     return root;
   }
@@ -290,10 +292,10 @@ function collectDependencies(root, types, index) {
     return;
   }
 
-  const deps = [];
+  let deps = [];
 
   types.forEach(type => {
-    deps.concat(typeDepsFor(root, type, index));
+    deps = deps.concat(typeDepsFor(root, type, index));
   });
 
   collectDependencies(root, deps, index);

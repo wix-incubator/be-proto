@@ -25,6 +25,17 @@ describe('output-to-files', () => {
     expect(lines[0]).to.equal(`const {obj} = require('./test.ns/obj');`);
   });
 
+  it('should require object in root', () => {
+    const givenImports = [{
+      name: 'obj',
+      namespace: ''
+    }];
+
+    const lines = toRequireLines(givenImports, '.');
+
+    expect(lines[0]).to.equal(`const {obj} = require('./obj');`);
+  });
+
   it('should require internal object relatively', () => {
     const givenImports = [{
       namespace: 'test.ns',

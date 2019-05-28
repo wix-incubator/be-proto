@@ -41,8 +41,7 @@ function httpClientGen(context) {
 }
 
 async function formatDescriptors(context, type) {
-  const loadedContext = await context.loadedContext();
-  const messageDesc = generateType(type, loadedContext);
+  const messageDesc = generateType(type);
 
   if (messageDesc) {
     const code = formatMessageCode(type, messageDesc);
@@ -59,7 +58,7 @@ async function formatDescriptors(context, type) {
   } else {
     return Promise.all(Object.keys(type.methods).map(async(methodName) => {
       const method = type.methods[methodName];
-      const methodDesc = generateMethod(method, loadedContext);
+      const methodDesc = generateMethod(method);
       const code = formatMethodCode(methodDesc);
       const imports = await mapImports(context, methodDesc);
 
