@@ -12,7 +12,7 @@
     "build": ":",
     "copy:proto": "mkdir -p test/proto/google/protobuf && cp node_modules/@wix/well-known-protos/protobuf/google/protobuf/descriptor.proto test/proto/google/protobuf/",
     "pretest": "npm run copy:proto",
-    "test": "mocha test --reporter mocha-env-reporter",
+    "test": "mocha test lib/**/*.spec.js --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "devDependencies": {

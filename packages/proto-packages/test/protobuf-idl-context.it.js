@@ -32,7 +32,8 @@ describe('Protobuf IDL context', function() {
   it('should lookup dependency types', async() => {
     const givenContext = aContext('package-with-proto-dependency');
 
-    const types = await givenContext.queryTypesFor(['test.NestedMessage']);
+    const typesContext = await givenContext.queryTypesFor(['test.NestedMessage']);
+    const types = typesContext.types;
 
     expect(types[0].name).to.equal('NestedMessage');
     expect(types[1].name).to.equal('Message1');
@@ -42,7 +43,8 @@ describe('Protobuf IDL context', function() {
   it('should lookup service types', async() => {
     const givenContext = aContext('package-with-proto-dependency');
 
-    const types = await givenContext.queryTypesFor(['test.TestService']);
+    const typesContext = await givenContext.queryTypesFor(['test.TestService']);
+    const types = typesContext.types;
 
     expect(types[0].name).to.equal('TestService');
     expect(types[1].name).to.equal('NestedMessage');

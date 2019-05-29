@@ -5,6 +5,7 @@ const path = require('path');
 const _ = require('lodash');
 const fs = require('fs-extra');
 const {resolveNamespace} = require('./type-utils');
+const {createTypesContext} = require('./types-context');
 
 function create(options) {
 
@@ -257,17 +258,7 @@ class ResolutionRoot extends pbjs.Root {
 }
 
 function queryTypesFor(root, typeNames) {
-  const index = {}
-
-  typeNames.forEach(typeName => {
-    // console.log(typeName, root.lookup(typeName));
-
-    index[typeName] = root.lookup(typeName);
-  });
-
-  collectDependencies(root, Object.values(index), index);
-
-  return Object.values(index);
+  return createTypesContext(root, typeNames.map((typeName) => root.lookup(typeName)));
 }
 
 async function resolve(root, node, name) {
@@ -287,20 +278,6 @@ async function resolve(root, node, name) {
   };
 }
 
-function collectDependencies(root, types, index) {
-  if (types.length === 0) {
-    return;
-  }
-
-  let deps = [];
-
-  types.forEach(type => {
-    deps = deps.concat(typeDepsFor(root, type, index));
-  });
-
-  collectDependencies(root, deps, index);
-}
-
 function collectFileDependencies(root, typeSets, index) {
   if (typeSets.length === 0) {
     return;
@@ -317,57 +294,6 @@ function collectFileDependencies(root, typeSets, index) {
   });
 
   collectFileDependencies(root, deps, index);
-}
-
-function typeDepsFor(root, type, index = {}) {
-  const deps = [];
-
-  typeDepsFromMethods(root, type, index, deps);
-  typeDepsFromFields(root, type, index, deps);
-
-  return _.uniq(deps);
-}
-
-function typeDepsFromMethods(root, type, index, deps) {
-  if (!type.methods) {
-    return;
-  }
-
-  Object.keys(type.methods).forEach(methodName => {
-    const method = type.methods[methodName];
-
-    const requestType = root.lookupType(method.requestType);
-    const responseType = root.lookupType(method.responseType);
-
-    // FIXME must be fully qualified names
-    index[method.requestType] = requestType;
-    index[method.responseType] = responseType;
-
-    typeDepsFromFields(root, requestType, index, deps);
-    typeDepsFromFields(root, responseType, index, deps);
-  });
-}
-
-function typeDepsFromFields(root, type, index, deps) {
-  if (!type.fields) {
-    return;
-  }
-
-  Object.keys(type.fields).forEach(fieldName => {
-    const {type: fieldTypeName} = type.fields[fieldName];
-
-    if (!index[fieldTypeName]) {
-      try {
-        const fieldType = root.lookupType(fieldTypeName);
-
-        if (fieldType) {
-          index[fieldTypeName] = fieldType;
-          deps.push(fieldType);
-        }
-      } catch(e) {
-      }
-    }
-  });
 }
 
 function addFileDepsToIndex(namespace, filename, index) {

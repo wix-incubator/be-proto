@@ -1,6 +1,13 @@
 module.exports = {
-  resolveNamespace
+  resolveNamespace,
+  resolveFullyQualifiedName
 };
+
+function resolveFullyQualifiedName(node) {
+  const namespace = resolveNamespace(node);
+
+  return namespace ? `${namespace}.${node.name}` : node.name;
+}
 
 function resolveNamespace(node) {
   const namespace = collectNamespace(node);

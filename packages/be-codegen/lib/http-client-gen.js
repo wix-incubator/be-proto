@@ -5,7 +5,7 @@ function httpClientGen(context) {
   return {
     async generate(typeNames, output) {
       try {
-        const types = await context.queryTypesFor(typeNames);
+        const {types} = await context.queryTypesFor(typeNames);
         const exportedTypes = [];
 
         await Promise.all(types.map(async(type) => {
