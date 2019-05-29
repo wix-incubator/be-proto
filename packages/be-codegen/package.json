@@ -30,7 +30,7 @@
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {
-    "@wix/proto-packages": "^1.0.0",
+    "@wix/proto-packages": "^1.0.18",
     "fs-extra": "^8.0.1",
     "protobufjs": "^6.8.8"
   }
