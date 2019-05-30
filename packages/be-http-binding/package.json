@@ -1,0 +1,25 @@
+{
+  "name": "@wix/be-http-binding",
+  "version": "1.0.0",
+  "author": "Mantas Indrašius <mantasi@wix.com>",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": ":",
+    "test": "mocha test --reporter mocha-env-reporter",
+    "release": "wnpm-release --no-shrinkwrap"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "mocha-env-reporter": "^3.0.0",
+    "node-fetch": "^2.6.0",
+    "protobufjs": "^6.8.8",
+    "wnpm-ci": "^6.2.55"
+  },
+  "dependencies": {}
+}
