@@ -3,19 +3,60 @@ const {typeUtils} = require('@wix/proto-packages');
 module.exports = {
   generateMessageUnit,
   generateEnum,
-  generateType
+  generateType,
+  generateTypes
 };
 
-function generateType(messageOrEnumType) {
+function generateTypes(types) {
+  const jsRefs = {};
+  const generated = types.map((type) => generateType(type, jsRefs)).filter((desc) => desc);
+  const exports = {};
+
+  generated.forEach(({name, messageType, js}) => {
+    exports[name] = {
+      messageType,
+      js
+    };
+  });
+
+  pruneLocalImports(jsRefs, types);
+
+  return {
+    namespace: generated.length > 0 ? generated[0].namespace: undefined,
+    exports,
+    js: {
+      refs: jsRefs
+    }
+  };
+}
+
+function pruneLocalImports(jsRefs, messageOrEnumTypes) {
+  const fqn = messageOrEnumTypes.map((type) => typeUtils.resolveFullyQualifiedName(type));
+
+  Object.keys(jsRefs).forEach((refName) => {
+    if (jsRefs[refName].source) {
+      const refType = jsRefs[refName].source.lookup(refName);
+
+      if (refType) {
+        const refTypeName = typeUtils.resolveFullyQualifiedName(refType);
+
+        if (fqn.indexOf(refTypeName) >= 0) {
+          delete jsRefs[refName];
+        }
+      }
+    }
+  });
+}
+
+function generateType(messageOrEnumType, jsRefs = {}) {
   if (messageOrEnumType.fields) {
-    return generateMessageUnit(messageOrEnumType);
+    return generateMessageUnit(messageOrEnumType, jsRefs);
   } else if (messageOrEnumType.values) {
-    return generateEnum(messageOrEnumType);
+    return generateEnum(messageOrEnumType, jsRefs);
   }
 }
 
-function generateMessageUnit(messageType) {
-  const jsRefs = {};
+function generateMessageUnit(messageType, jsRefs = {}) {
   const {jsFields} = formatMessageFields(messageType, jsRefs);
 
   const fnCode = `${reference('MessageBuilder', null, jsRefs)}.create()\r\n${jsFields}`;
@@ -36,8 +77,7 @@ function generateMessageUnit(messageType) {
   };
 }
 
-function generateEnum(enumType) {
-  const jsRefs = {};
+function generateEnum(enumType, jsRefs = {}) {
   const {jsFields} = formatEnumFields(enumType.values);
 
   const fnCode = `${reference('EnumBuilder', null, jsRefs)}.create()${jsFields}`;

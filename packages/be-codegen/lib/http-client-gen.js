@@ -1,15 +1,18 @@
-const {generateType} = require('./message-generator');
+const {generateTypes} = require('./message-generator');
 const {generateMethod} = require('./http-method-generator');
+const _ = require('lodash');
 
 function httpClientGen(context) {
   return {
     async generate(typeNames, output) {
       try {
-        const {types} = await context.queryTypesFor(typeNames);
+        const {resolveCycleGroups} = await context.queryTypesFor(typeNames);
         const exportedTypes = [];
 
-        await Promise.all(types.map(async(type) => {
-          const descriptors = await formatDescriptors(context, type);
+        const cycleGroups = resolveCycleGroups();
+
+        await Promise.all(cycleGroups.map(async(typesInGroup) => {
+          const descriptors = await formatDescriptors(context, typesInGroup);
 
           descriptors.forEach((desc) => {
             exportedTypes.push(formatTypeName(desc));
@@ -34,50 +37,66 @@ function httpClientGen(context) {
 
         output.complete();
       } catch(e) {
+        console.error(e);
         output.error(e);
       }
     }
   };
 }
 
-async function formatDescriptors(context, type) {
-  const messageDesc = generateType(type);
+async function formatDescriptors(context, types) {
+  const messageDescriptors = generateTypes(types);
+  const methods = _.flatten(types.filter(({methods}) => methods).map((type) => Object.values(type.methods)));
 
-  if (messageDesc) {
-    const code = formatMessageCode(type, messageDesc);
-    const imports = await mapImports(context, messageDesc);
+  let descriptors = [];
 
-    return [{
-      namespace: messageDesc.namespace,
-      name: messageDesc.name,
+  const typeNamesToExport = Object.keys(messageDescriptors.exports);
+  const numTypesToExport = typeNamesToExport.length;
+
+  if (numTypesToExport > 0) {
+    const code = formatMessagesCode(messageDescriptors);
+    const imports = await mapImports(context, messageDescriptors);
+
+    const name = numTypesToExport > 1 ? `agg_${typeNamesToExport.join('_')}` : typeNamesToExport[0];
+
+    descriptors = descriptors.concat([{
+      namespace: messageDescriptors.namespace,
+      name,
       js: {
         code,
         imports
       }
-    }];
-  } else {
-    return Promise.all(Object.keys(type.methods).map(async(methodName) => {
-      const method = type.methods[methodName];
-      const methodDesc = generateMethod(method);
-      const code = formatMethodCode(methodDesc);
-      const imports = await mapImports(context, methodDesc);
-
-      return {
-        namespace: methodDesc.namespace,
-        name: methodDesc.name,
-        js: {
-          code,
-          imports
-        }
-      }
-    }));
+    }]);
   }
+
+  descriptors = descriptors.concat(await Promise.all(methods.map(async(method) => {
+    const methodDesc = generateMethod(method);
+    const code = formatMethodCode(methodDesc);
+    const imports = await mapImports(context, methodDesc);
+
+    return {
+      namespace: methodDesc.namespace,
+      name: methodDesc.name,
+      js: {
+        code,
+        imports
+      }
+    }
+  })));
+
+  return descriptors;
 }
 
-function formatMessageCode(type, messageDesc) {
+function formatMessagesCode(messageDescriptors) {
   return `module.exports = {
-      get ${type.name}: lazy(() => ${messageDesc.js.code}.build())
-    }`;
+    ${Object.keys(messageDescriptors.exports)
+      .map((typeName) => formatMessageCode(typeName, messageDescriptors.exports[typeName]))
+      .join(',\r\n')}
+  }`;
+}
+
+function formatMessageCode(typeName, messageDesc) {
+  return `get ${typeName}: lazy(() => ${messageDesc.js.code}.build())`
 }
 
 function formatMethodCode(methodDesc) {

@@ -1,4 +1,4 @@
-const {generateMessageUnit, generateEnum} = require('./message-generator');
+const {generateMessageUnit, generateEnum, generateTypes} = require('./message-generator');
 const protobuf = require('protobufjs');
 const {expect} = require('chai');
 const _ = require('lodash');
@@ -155,5 +155,31 @@ describe('message-generator', () => {
       source: givenProto.root.nested.TestMessage
     });
     expect(generatedMessage.js.refs.TestEnum).to.exist;
+  });
+
+  it('should generate multiple types', () => {
+    const givenProto = protobuf.parse(`
+      syntax = "proto3";
+
+      package a;
+
+      message TestMessage1 {
+        string test_value = 1;
+      }
+
+      message TestMessage2 {
+        string test_value = 1;
+        TestMessage1 msg = 2;
+      }
+    `);
+
+    const generatedMessages = generateTypes([givenProto.root.nested.a.TestMessage1, givenProto.root.nested.a.TestMessage2]);
+
+    expect(generatedMessages.namespace).to.equal('a');
+    expect(generatedMessages.exports['TestMessage1'].js.code).to.include(`MessageBuilder`);
+    expect(generatedMessages.exports['TestMessage2']).to.exist;
+    expect(generatedMessages.js.refs).to.exist;
+
+    expect(_.sortBy(Object.keys(generatedMessages.js.refs))).to.deep.equal(['MessageBuilder', 'string']);
   });
 });
