@@ -52,7 +52,7 @@ function create(options) {
   }
 }
 
-async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages) {
+async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages = []) {
   const result = await klaw(contextDir, { preserveSymlinks: true });
 
   const protoFiles = [];
@@ -62,18 +62,22 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
 
   await collectProtofilesTo(extraPackages, protoFiles);
 
-  result.forEach(fs => {
-    if (fs.stats.isSymbolicLink()) {
-      links.push(fs.path);
-    } else if (fs.path.toLowerCase().endsWith('.proto')) {
+  const currentDir = path.resolve(contextDir);
+
+  result.forEach(node => {
+    if (node.stats.isSymbolicLink() && node.path !== currentDir) {
+      links.push(node.path);
+    } else if (node.path.toLowerCase().endsWith('.proto')) {
       protoFiles.push({
-        path: fs.path
+        path: node.path
       });
-    } else if (path.basename(fs.path) === 'package.json') {
-      packageFiles.push(fs.path);
-      packageDirs.push(path.dirname(fs.path));
+    } else if (path.basename(node.path) === 'package.json') {
+      packageFiles.push(node.path);
+      packageDirs.push(path.dirname(node.path));
     }
   });
+
+  const resolvingFromLinks = Promise.all(links.map(async(link) => resolveProtoRoots(await fs.realpath(link), sourceRoots, packagesDirName)));
 
   const ts = new TrieSearch('path', {splitOnRegEx: /\\/});
 
@@ -88,6 +92,16 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
 
   existingRoots.forEach(root => {
     roots[root] = ts.get(root).map((entry) => path.relative(root, entry.path));
+  });
+
+  const fromLinks = await resolvingFromLinks;
+
+  fromLinks.forEach((rootsFromLinks) => {
+    for (let root in rootsFromLinks.roots) {
+      roots[root] = rootsFromLinks.roots[root];
+    }
+
+    rootsFromLinks.packageFiles.forEach((packageFile) => packageFiles.push(packageFile));
   });
 
   return {roots, packageFiles};
