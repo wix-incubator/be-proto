@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@wix/be-http-binding": "^1.0.1",
-    "@wix/proto-packages": "^1.0.19",
+    "@wix/proto-packages": "^1.0.22",
     "find-root": "^1.1.0",
     "url-pattern": "^1.0.3"
   }
