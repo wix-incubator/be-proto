@@ -1,5 +1,5 @@
 {
-  "name": "@wix/be-http-client",
+  "name": "@wix/be-server",
   "version": "1.0.0",
   "author": "Mantas Indrašius <mantasi@wix.com>",
   "publishConfig": {
@@ -10,15 +10,20 @@
   "private": false,
   "scripts": {
     "build": ":",
-    "test": ":",
+    "test": "mocha test --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "googleapis": "^40.0.0",
     "mocha": "^5.2.0",
     "mocha-env-reporter": "^3.0.0",
+    "node-fetch": "^2.6.0",
     "wnpm-ci": "^6.2.55"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@wix/be-http-binding": "^1.0.1",
+    "@wix/proto-packages": "^1.0.19",
+    "find-root": "^1.1.0",
+    "url-pattern": "^1.0.3"
+  }
 }
