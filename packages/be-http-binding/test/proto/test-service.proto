@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package test;
+
+import "google/api/http.proto";
+
+service TestService {
+    rpc Get (Message) returns (Message) {
+        option (google.api.http) = {
+          get: "/api/messages"
+        };
+    }
+    rpc GetNoHttp (Message) returns (Message);
+}
+
+message Message {
+  string message = 1;
+}
