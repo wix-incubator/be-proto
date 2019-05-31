@@ -1,17 +1,14 @@
 const http = require('http');
-const UrlPattern = require('url-pattern');
-const {resolveHttpRoutes} = require('@wix/be-http-binding');
-const url = require('url');
+const routes = require('./routes');
 
 module.exports = function start(options) {
-  const routes = resolveRoutes(options.services)
+  const methodRoutes = routes(options.services)
 
   const server = http.createServer(async(req, res) => {
     try {
-      const parsedUrl = url.parse(req.url);
       const httpMethod = req.method;
 
-      const route = routes.resolve(httpMethod, parsedUrl.pathname);
+      const route = methodRoutes.resolve(httpMethod, req.url);
 
       if (!route) {
         res.statusCode = 404;
@@ -40,52 +37,3 @@ module.exports = function start(options) {
     }
   };
 };
-
-function resolveRoutes(services) {
-  const routes = {};
-
-  services.forEach(({service, bindings}) => {
-    const serviceRoutes = resolveHttpRoutes(service);
-
-    Object.keys(serviceRoutes).forEach((methodName) => {
-      const methodRoutes = serviceRoutes[methodName];
-
-      Object.keys(methodRoutes).forEach((httpMethod) => {
-        const httpMethodLower = httpMethod.toLowerCase();
-
-        if (!routes[httpMethodLower]) {
-          routes[httpMethodLower] = [];
-        }
-
-        methodRoutes[httpMethod].forEach((path) => {
-          routes[httpMethodLower].push({
-            pattern: new UrlPattern(path),
-            method: service.methods[methodName],
-            implementation: bindings[methodName]
-          });
-        });
-      });
-    });
-  });
-
-  return {
-    resolve(httpMethod, uri) {
-      const methodsForHttpMethod = routes[httpMethod.toLowerCase()];
-
-      if (!methodsForHttpMethod) {
-        return;
-      }
-
-      let resolvedRoute;
-
-      for (let i = 0; i < methodsForHttpMethod.length; i++) {
-        if (methodsForHttpMethod[i].pattern.match(uri)) {
-          resolvedRoute = methodsForHttpMethod[i];
-          break;
-        }
-      }
-
-      return resolvedRoute;
-    }
-  };
-}
