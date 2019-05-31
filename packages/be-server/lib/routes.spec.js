@@ -29,6 +29,32 @@ describe('Routes', () => {
       });
   });
 
+  it('should extract complex request arguments', () => {
+    const givenRoutes = routesFrom(`
+      service TestRoutes {
+        rpc Get (Empty) returns (Empty) {
+          option (google.api.http) = {
+            get: "/api/{valueFromPath}"
+          };
+        }
+      }
+
+      message Empty {}
+    `);
+
+    const {request, method} = givenRoutes.resolve('GET', '/api/path-1?test.arr=arr-1&test.arr=arr-2&test.bool=true&num=10');
+
+    expect(method.name).to.equal('Get');
+    expect(request).to.deep.equal({
+      test: {
+        arr: ['arr-1', 'arr-2'],
+        bool: 'true'
+      },
+      num: '10',
+      valueFromPath: 'path-1'
+    });
+  });
+
   function routesFrom(source) {
     const parsed = protobufjs.parse(`
       syntax = "proto3";
