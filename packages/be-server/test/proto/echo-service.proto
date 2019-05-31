@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package test;
+
+import "google/api/http.proto";
+
+service EchoService {
+    rpc Echo (Message) returns (Message) {
+        option (google.api.http) = {
+          get: "/api/echo"
+        };
+    }
+}
+
+message Message {
+  string message = 1;
+}
