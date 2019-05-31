@@ -6,20 +6,30 @@ module.exports = function start(options) {
 
   const server = http.createServer(async(req, res) => {
     try {
-      const httpMethod = req.method;
-
-      const route = methodRoutes.resolve(httpMethod, req.url);
+      const {route, request} = methodRoutes.resolve(req.method, req.url);
 
       if (!route) {
         res.statusCode = 404;
       }
 
-      const result = await route.implementation({message: 'Hello'});
+      const contentType = req.headers['content-type'];
 
-      res.write(JSON.stringify(result));
+      if (contentType) {
+        await new Promise((resolve, reject) =>
+          req.on('data', async(data) => {
+            try {
+              resolve(await execute(route, res, JSON.parse(data)));
+            } catch(e) {
+              reject(e);
+            }
+          }));
+      } else {
+        await execute(route, res, request);
+      }
     } catch(e) {
       res.statusCode = 500;
       res.write(e.toString());
+      console.error(e);
     } finally {
       res.end();
     }
@@ -37,3 +47,10 @@ module.exports = function start(options) {
     }
   };
 };
+
+async function execute(route, res, body) {
+  const result = await route.implementation(body);
+
+  res.setHeader('Content-Type', 'application/json');
+  res.write(JSON.stringify(result));
+}

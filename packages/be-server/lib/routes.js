@@ -62,7 +62,7 @@ module.exports = function routes(services) {
       }
 
       return {
-        ...resolvedRoute,
+        route: resolvedRoute,
         request
       };
     }

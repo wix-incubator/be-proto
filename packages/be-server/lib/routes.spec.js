@@ -20,9 +20,9 @@ describe('Routes', () => {
       }
     `);
 
-      const {request, method} = givenRoutes.resolve('GET', '/api/path-1?valueFromQuery=query-1');
+      const {request, route} = givenRoutes.resolve('GET', '/api/path-1?valueFromQuery=query-1');
 
-      expect(method.name).to.equal('Get');
+      expect(route.method.name).to.equal('Get');
       expect(request).to.deep.equal({
         valueFromPath: 'path-1',
         valueFromQuery: 'query-1'
@@ -42,9 +42,9 @@ describe('Routes', () => {
       message Empty {}
     `);
 
-    const {request, method} = givenRoutes.resolve('GET', '/api/path-1?test.arr=arr-1&test.arr=arr-2&test.bool=true&num=10');
+    const {request, route} = givenRoutes.resolve('GET', '/api/path-1?test.arr=arr-1&test.arr=arr-2&test.bool=true&num=10');
 
-    expect(method.name).to.equal('Get');
+    expect(route.method.name).to.equal('Get');
     expect(request).to.deep.equal({
       test: {
         arr: ['arr-1', 'arr-2'],

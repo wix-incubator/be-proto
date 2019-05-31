@@ -10,6 +10,11 @@ service EchoService {
           get: "/api/echo"
         };
     }
+    rpc PostEcho (Message) returns (Message) {
+        option (google.api.http) = {
+          post: "/api/echo"
+        };
+    }
 }
 
 message Message {

@@ -14,7 +14,8 @@ describe('HTTP server', function() {
       .withContextDir(path.resolve(__dirname, '..'))
       .withExtraProtoPackage(path.resolve(__dirname, 'proto'))
       .withService('test.EchoService', {
-        echo: (message) => message
+        echo: (message) => message,
+        postEcho: (message) => message
       })
       .start({ port: 9901 });
   });
@@ -23,6 +24,24 @@ describe('HTTP server', function() {
 
   it('should call to an exposed endpoint', async() => {
     const response = await fetch('http://localhost:9901/api/echo?message=Hello');
+
+    expect(response.status).to.equal(200);
+
+    const body = await response.json();
+
+    expect(body).to.deep.equal({
+      message: 'Hello'
+    });
+  });
+
+  it('should post', async() => {
+    const response = await fetch('http://localhost:9901/api/echo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ message: 'Hello' })
+    });
 
     expect(response.status).to.equal(200);
 
