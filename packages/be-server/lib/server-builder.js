@@ -1,7 +1,4 @@
-const {create} = require('@wix/proto-packages');
 const startServer = require('./server');
-const defaultContextDir = require('find-root')(process.argv[1]);
-const messageTypes = require('./message-types');
 
 module.exports = {
   serverBuilder
@@ -9,66 +6,28 @@ module.exports = {
 
 function serverBuilder(context = {}) {
   return {
-    withContextDir(contextDir) {
-      return serverBuilder({
-        ...context,
-        contextDir
-      });
-    },
-    withExtraProtoPackage(extraPackageDir) {
-      return serverBuilder({
-        ...context,
-        extraPackageDir
-      });
-    },
-    withService(serviceType, implementation) {
-      const services = {...(context.services || {})};
-
-      services[serviceType] = implementation;
-
-      context.services = services;
-
-      return serverBuilder({
-        ...context
-      });
-    },
     withBindings(bindings) {
       return serverBuilder({
+        ...context,
         bindings
       });
     },
+    withBindingsSource(bindingsSource) {
+      return serverBuilder({
+        ...context,
+        bindingsSource
+      });
+    },
     async start(options) {
-      const protoContext = create({
-        contextDir: context.contextDir || defaultContextDir,
-        sourceRoots: ['proto'],
-        extraPackages: [context.extraPackageDir]
-      });
-
-      const loadedContext = await protoContext.loadedContext();
-
-      const services = Object.keys(context.services).map((serviceName) => {
-        const service = loadedContext.lookupService(serviceName);
-        const bindings = {};
-
-        Object.values(service.methods).forEach((method) => {
-          bindings[method.name] = context.services[serviceName][toSmallCap(method.name)];
-        });
-
-        return {
-          service,
-          bindings
-        };
-      });
+      const sourcedBindings = context.bindingsSource ? await context.bindingsSource.bindings() : [];
+      const dynamicBindings = context.bindings;
+      
+      const bindings = [...sourcedBindings, ...dynamicBindings];
 
       return startServer({
         ...options,
-        services,
-        messageTypes: messageTypes(loadedContext)
+        bindings
       });
     }
    };
-}
-
-function toSmallCap(value) {
-  return value.charAt(0).toLowerCase() + value.slice(1);
 }

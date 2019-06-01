@@ -15,24 +15,39 @@ describe('HTTP server', function() {
 
   before(async() => {
     server = await beServer.builder()
-      .withContextDir(path.resolve(__dirname, '..'))
-      .withExtraProtoPackage(path.resolve(__dirname, 'proto'))
-      .withService('test.EchoService', {
-        echo: (message) => message,
-        postEcho: (message) => message,
-        typesEcho: (message) => message,
-      })
-      .withBindings({
-        binding: http(get('/dynamic-echo'), echoMessage, echoMessage),
+      .withBindingsSource(beServer.fromProtoModules({
+        contextDir: path.resolve(__dirname, '..'),
+        extraPackages: [path.resolve(__dirname, 'proto')]
+      }, {
+        'test.EchoService': {
+          echo: (message) => message,
+          postEcho: (message) => message,
+          typesEcho: (message) => message,
+        }
+      }))
+      .withBindings([{
+        binding: http(get('/api/dynamic-echo'), echoMessage, echoMessage),
         invoke: (message) => message
-      })
+      }])
       .start({ port: 9901 });
   });
 
   after(() => server.stop());
 
-  it('should call to an exposed endpoint', async() => {
+  it('should call an exposed endpoint', async() => {
     const response = await fetch('http://localhost:9901/api/echo?message=Hello');
+
+    expect(response.status).to.equal(200);
+
+    const body = await response.json();
+
+    expect(body).to.deep.equal({
+      message: 'Hello'
+    });
+  });
+
+  it('should call a dynamic endpoint', async() => {
+    const response = await fetch('http://localhost:9901/api/dynamic-echo?message=Hello');
 
     expect(response.status).to.equal(200);
 

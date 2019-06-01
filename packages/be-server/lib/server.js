@@ -2,29 +2,29 @@ const http = require('http');
 const routes = require('./routes');
 
 module.exports = function start(options) {
-  const methodRoutes = routes(options.services, options.messageTypes);
+  const methodRoutes = routes(options.bindings);
 
   const server = http.createServer(async(req, res) => {
     try {
-      const {route, request} = methodRoutes.resolve(req.method, req.url);
+      const {invoke, request} = methodRoutes.resolve(req.method, req.url);
 
-      if (!route) {
+      if (!invoke) {
         res.statusCode = 404;
-      }
-
-      const contentType = req.headers['content-type'];
-
-      if (contentType) {
-        await new Promise((resolve, reject) =>
-          req.on('data', async(data) => {
-            try {
-              resolve(await execute(route, res, request, JSON.parse(data)));
-            } catch(e) {
-              reject(e);
-            }
-          }));
       } else {
-        await execute(route, res, request);
+        const contentType = req.headers['content-type'];
+
+        if (contentType) {
+          await new Promise((resolve, reject) =>
+            req.on('data', async(data) => {
+              try {
+                resolve(await execute(invoke, res, request, JSON.parse(data)));
+              } catch(e) {
+                reject(e);
+              }
+            }));
+        } else {
+          await execute(invoke, res, request);
+        }
       }
     } catch(e) {
       res.statusCode = 500;
@@ -48,12 +48,8 @@ module.exports = function start(options) {
   };
 };
 
-async function execute(route, res, request, body = {}) {
-  const requestMessage = route.requestMessage;
-
-  const message = requestMessage.fromValue([request, body]);
-
-  const result = await route.implementation(message);
+async function execute(invoke, res, request, body = {}) {
+  const result = await invoke([request, body]);
 
   res.setHeader('Content-Type', 'application/json');
   res.write(JSON.stringify(result));

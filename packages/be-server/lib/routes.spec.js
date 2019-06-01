@@ -1,51 +1,66 @@
 const routes = require('./routes');
-const messageTypes = require('./message-types');
 const {expect} = require('chai');
-const protobufjs = require('protobufjs');
+const {httpBinding, messageBuilder, wellKnownTypes} = require('@wix/be-http-binding');
+const {http, get} = httpBinding;
 
 describe('Routes', () => {
 
-  it('should match and resolve values in URI', () => {
-    const givenRoutes = routesFrom(`
-      service TestRoutes {
-        rpc Get (Message) returns (Message) {
-          option (google.api.http) = {
-            get: "/api/{valueFromPath}"
-          };
-        }
-      }
+  const echoMessage = messageBuilder().field('message', wellKnownTypes.string, 1).build();
 
-      message Message {
-        string value_from_path = 1;
-        string value_from_query = 2;
-      }
-    `);
+  it('should match a GET route', async() => {
+    const givenBinding = http(get('/echo'), echoMessage, echoMessage);
+    const givenRoutes = routes([{
+      binding: givenBinding,
+      invoke: (message) => message
+    }]);
 
-      const {request, route} = givenRoutes.resolve('GET', '/api/path-1?valueFromQuery=query-1');
+    const {request, invoke} = givenRoutes.resolve('GET', '/echo?message=Hello');
 
-      expect(route.method.name).to.equal('Get');
-      expect(request).to.deep.equal({
-        valueFromPath: 'path-1',
-        valueFromQuery: 'query-1'
-      });
+    expect(request).to.deep.equal({
+      message: 'Hello'
+    });
+
+    expect(invoke).to.exist;
+    expect(await invoke(request)).to.deep.equal(request);
+  });
+
+  it('should match and resolve values in URI', async() => {
+    const givenMessage = messageBuilder()
+      .field('valueFromPath', wellKnownTypes.string, 1)
+      .field('valueFromQuery', wellKnownTypes.string, 2)
+      .build();
+
+    const givenBinding = http(get('/api/{valueFromPath}'), givenMessage, givenMessage);
+
+    const givenRoutes = routes([{
+      binding: givenBinding,
+      invoke: (message) => message
+    }]);
+
+    const {request, invoke} = givenRoutes.resolve('GET', '/api/path-1?valueFromQuery=query-1');
+
+    expect(request).to.deep.equal({
+      valueFromPath: 'path-1',
+      valueFromQuery: 'query-1'
+    });
+    
+    expect(invoke).to.exist;
+    expect(await invoke(request)).to.deep.equal(request);
   });
 
   it('should extract complex request arguments', () => {
-    const givenRoutes = routesFrom(`
-      service TestRoutes {
-        rpc Get (Empty) returns (Empty) {
-          option (google.api.http) = {
-            get: "/api/{valueFromPath}"
-          };
-        }
-      }
+    const givenMessage = messageBuilder().build();
 
-      message Empty {}
-    `);
+    const givenBinding = http(get('/api/{valueFromPath}'), givenMessage, givenMessage);
 
-    const {request, route} = givenRoutes.resolve('GET', '/api/path-1?test.arr=arr-1&test.arr=arr-2&test.bool=true&num=10');
+    const givenRoutes = routes([{
+      binding: givenBinding,
+      invoke: (message) => message
+    }]);
 
-    expect(route.method.name).to.equal('Get');
+    const {request, invoke} = givenRoutes.resolve('GET', '/api/path-1?test.arr=arr-1&test.arr=arr-2&test.bool=true&num=10');
+
+    expect(invoke).to.exist;
     expect(request).to.deep.equal({
       test: {
         arr: ['arr-1', 'arr-2'],
@@ -55,22 +70,4 @@ describe('Routes', () => {
       valueFromPath: 'path-1'
     });
   });
-
-  function routesFrom(source) {
-    const parsed = protobufjs.parse(`
-      syntax = "proto3";
-
-      package test;
-
-      import "google/api/http.proto";
-
-      ${source}
-    `);
-
-    const ns = parsed.root.nested.test;
-
-    return routes(Object.values(ns.nested).filter((type) => type instanceof protobufjs.Service).map((service) => ({
-      service
-    })), messageTypes(parsed.root));
-  }
 });
