@@ -6,12 +6,10 @@ module.exports = {
   put: body('put')
 };
 
-function http(method, path, requestMessage, responseMessage, methodOptions) {
-  const invocation = method(path, requestMessage, responseMessage);
-
+function http(binding, requestMessage, responseMessage, methodOptions) {
   return {
     async invoke(message, options) {
-      const result = await invocation.invokeWith(methodOptions.invoker || options.invoker, requestMessage.fromValue(message));
+      const result = await binding.invokeWith(methodOptions.invoker || options.invoker, requestMessage.fromValue(message));
 
       return responseMessage.fromValue(result);
     }
@@ -27,7 +25,11 @@ function bodyless(method) {
 }
 
 function body(method) {
-  return (path) => methodInvoker(method, (message) => ({uri: path, message}));
+  return (path) => {
+    const mapToPath = pathMapper(path);
+
+    return methodInvoker(method, (message) => mapToPath(message));
+  };
 }
 
 function methodInvoker(method, getUriAndMessage) {
@@ -50,11 +52,33 @@ function methodInvoker(method, getUriAndMessage) {
 }
 
 function uriMapper(path) {
-  // const [first, ...rest] = path.split(/{(.+?)}/g);
-
-  // console.log(first);
-
   return (message) => `${path}?${valueToQuery(message)}`;
+}
+
+function pathMapper(path) {
+  const [prefix, ...rest] = path.split(/({.+?})/g);
+
+  return (message) => {
+    const copy = {...message};
+
+    const uri = prefix + rest.map((placeholderOrValue) => {
+      if (placeholderOrValue.startsWith('{')) {
+        const fieldName = placeholderOrValue.substring(1, placeholderOrValue.length - 1);
+        const value = message[fieldName];
+
+        delete copy[fieldName];
+
+        return value;
+      } else {
+        return placeholderOrValue;
+      }
+    }).join('');
+
+    return {
+      uri,
+      message: copy
+    };
+  };
 }
 
 function valueToQuery(value) {

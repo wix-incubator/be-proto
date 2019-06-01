@@ -22,6 +22,7 @@
     "mocha-env-reporter": "^3.0.0",
     "node-fetch": "^2.6.0",
     "protobufjs": "^6.8.8",
+    "url-pattern": "^1.0.3",
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {}
