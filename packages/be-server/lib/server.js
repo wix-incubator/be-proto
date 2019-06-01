@@ -2,7 +2,7 @@ const http = require('http');
 const routes = require('./routes');
 
 module.exports = function start(options) {
-  const methodRoutes = routes(options.services)
+  const methodRoutes = routes(options.services, options.messageTypes);
 
   const server = http.createServer(async(req, res) => {
     try {
@@ -18,7 +18,7 @@ module.exports = function start(options) {
         await new Promise((resolve, reject) =>
           req.on('data', async(data) => {
             try {
-              resolve(await execute(route, res, JSON.parse(data)));
+              resolve(await execute(route, res, request, JSON.parse(data)));
             } catch(e) {
               reject(e);
             }
@@ -48,8 +48,14 @@ module.exports = function start(options) {
   };
 };
 
-async function execute(route, res, body) {
-  const result = await route.implementation(body);
+async function execute(route, res, request, body) {
+  const requestMessage = route.requestMessage;
+  
+  console.log(request, body);
+
+  const message = requestMessage.fromValue([request, body]);
+
+  const result = await route.implementation(message);
 
   res.setHeader('Content-Type', 'application/json');
   res.write(JSON.stringify(result));

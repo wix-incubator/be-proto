@@ -15,7 +15,8 @@ describe('HTTP server', function() {
       .withExtraProtoPackage(path.resolve(__dirname, 'proto'))
       .withService('test.EchoService', {
         echo: (message) => message,
-        postEcho: (message) => message
+        postEcho: (message) => message,
+        typesEcho: (message) => message,
       })
       .start({ port: 9901 });
   });
@@ -49,6 +50,30 @@ describe('HTTP server', function() {
 
     expect(body).to.deep.equal({
       message: 'Hello'
+    });
+  });
+
+  it.only('should post typed message', async() => {
+    const response = await fetch('http://localhost:9901/api/echo/i-am-a-string?int=99', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ nested: {
+        message: 'Hello'
+      }})
+    });
+
+    expect(response.status).to.equal(200);
+
+    const body = await response.json();
+
+    expect(body).to.deep.equal({
+      int: 99,
+      str: 'i-am-a-string',
+      nested: {
+        message: 'Hello'
+      }
     });
   });
 });

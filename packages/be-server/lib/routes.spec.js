@@ -1,4 +1,5 @@
 const routes = require('./routes');
+const messageTypes = require('./message-types');
 const {expect} = require('chai');
 const protobufjs = require('protobufjs');
 
@@ -70,6 +71,6 @@ describe('Routes', () => {
 
     return routes(Object.values(ns.nested).filter((type) => type instanceof protobufjs.Service).map((service) => ({
       service
-    })));
+    })), messageTypes(parsed.root));
   }
 });

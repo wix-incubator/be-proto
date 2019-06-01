@@ -1,6 +1,7 @@
 const {create} = require('@wix/proto-packages');
 const startServer = require('./server');
 const defaultContextDir = require('find-root')(process.argv[1]);
+const messageTypes = require('./message-types');
 
 module.exports = {
   serverBuilder
@@ -56,7 +57,8 @@ function serverBuilder(context = {}) {
 
       return startServer({
         ...options,
-        services
+        services,
+        messageTypes: messageTypes(loadedContext)
       });
     }
    };

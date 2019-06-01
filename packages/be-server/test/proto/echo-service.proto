@@ -10,13 +10,26 @@ service EchoService {
           get: "/api/echo"
         };
     }
+
     rpc PostEcho (Message) returns (Message) {
         option (google.api.http) = {
           post: "/api/echo"
+        };
+    }
+
+    rpc TypesEcho (TypesMessage) returns (TypesMessage) {
+        option (google.api.http) = {
+          post: "/api/echo/{str}"
         };
     }
 }
 
 message Message {
   string message = 1;
+}
+
+message TypesMessage {
+  Message nested = 1;
+  int32 int = 2;
+  string str = 3;  
 }

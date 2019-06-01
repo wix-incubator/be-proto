@@ -3,7 +3,7 @@ const UrlPattern = require('url-pattern');
 const {resolveHttpRoutes} = require('@wix/be-http-binding');
 const querystring = require('querystring');
 
-module.exports = function routes(services) {
+module.exports = function routes(services, messageTypes) {
   const routes = {};
 
   services.forEach(({service, bindings = {}}) => {
@@ -11,6 +11,8 @@ module.exports = function routes(services) {
 
     Object.keys(serviceRoutes).forEach((methodName) => {
       const methodRoutes = serviceRoutes[methodName];
+      const method = service.methods[methodName];
+      const requestMessage = messageTypes.lookup(method.parent, method.requestType);
 
       Object.keys(methodRoutes).forEach((httpMethod) => {
         const httpMethodLower = httpMethod.toLowerCase();
@@ -22,7 +24,8 @@ module.exports = function routes(services) {
         methodRoutes[httpMethod].forEach((path) => {
           routes[httpMethodLower].push({
             pattern: new UrlPattern(fromCurly(path)),
-            method: service.methods[methodName],
+            method,
+            requestMessage,
             implementation: bindings[methodName]
           });
         });
