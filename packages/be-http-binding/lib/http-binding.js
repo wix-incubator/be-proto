@@ -6,14 +6,21 @@ module.exports = {
   put: body('put')
 };
 
-function http(binding, requestMessage, responseMessage, methodOptions) {
+function http(binding, requestMessage, responseMessage, methodOptions = {}) {
   return {
-    async invoke(message, options) {
-      const result = await binding.invokeWith(methodOptions.invoker || options.invoker, requestMessage.fromValue(message));
+    async invoke(message, options = {}) {
+      const result = await binding.invoke(requestMessage.fromValue(message), mergeOptions(methodOptions, options));
 
       return responseMessage.fromValue(result);
     }
   };
+
+  function mergeOptions(a, b) {
+    return {
+      ...a,
+      ...b
+    };
+  }
 }
 
 function bodyless(method) {
@@ -34,12 +41,14 @@ function body(method) {
 
 function methodInvoker(method, getUriAndMessage) {
   return {
-    async invokeWith(invoker, rawMessage) {
+    async invoke(rawMessage, options) {
+      const invoker = options.invoker;
       const {uri, message} = getUriAndMessage(rawMessage);
 
       const params = {
         method,
-        uri
+        uri,
+        options
       };
 
       if (message) {

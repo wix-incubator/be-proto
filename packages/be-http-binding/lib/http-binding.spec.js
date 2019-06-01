@@ -33,7 +33,8 @@ describe('http-binding', () => {
     expect(invoker.invocations()).to.have.length(1);
     expect(invoker.invocations()[0]).to.deep.equal({
       method: 'get',
-      uri: '/pass?a=1'
+      uri: '/pass?a=1',
+      message: undefined
     });
   });
 
@@ -84,14 +85,40 @@ describe('http-binding', () => {
     });
   });
 
+  it('should pass options to invoker', async() => {
+    const givenMethod = http(get('/pass'), message, message, {invoker, methodOption: 'a'});
+
+    await givenMethod.invoke({
+      a: 1,
+      b: 2
+    }, {
+      invocationOption: 'b'
+    });
+
+    const lastOptions = invoker.lastOptions();
+
+    expect(lastOptions.methodOption).to.equal('a');
+    expect(lastOptions.invocationOption).to.equal('b');
+  });
+
   function testInvoker(fn) {
     const invocations = [];
+    let lastOptions;
 
     return {
-      invoke(request) {
-        invocations.push(request);
+      invoke(request) {        
+        invocations.push({
+          method: request.method,
+          uri: request.uri,
+          message: request.message
+        });
+
+        lastOptions = request.options;
 
         return fn(request);
+      },
+      lastOptions() {
+        return lastOptions;
       },
       invocations() {
         return invocations;
