@@ -8,18 +8,28 @@ module.exports = {
 
 function http(binding, requestMessage, responseMessage, methodOptions = {}) {
   return {
-    async invoke(message, options = {}) {
-      const result = await binding.invoke(requestMessage.fromValue(message), mergeOptions(methodOptions, options));
+    invoke: createInvoke((msg, options) => binding.invoke(msg, options), methodOptions),
+    httpRoutes() {
+      return [binding.httpRoute()];
+    },
+    createInvoke
+  };
+
+  function createInvoke(fn, options = {}) {
+    return async(message, inlineOptions = {}) => {
+      const result = await fn(requestMessage.fromValue(message), mergeOptions(methodOptions, options, inlineOptions));
 
       return responseMessage.fromValue(result);
     }
-  };
+  }
 
-  function mergeOptions(a, b) {
-    return {
+  function mergeOptions() {
+    const mergeable = Array.prototype.slice.call(arguments);
+
+    return mergeable.reduce((a, b) => ({
       ...a,
       ...b
-    };
+    }));
   }
 }
 
@@ -27,7 +37,7 @@ function bodyless(method) {
   return (path) => {
     const mapToUri = uriMapper(path);
 
-    return methodInvoker(method, (message) => ({uri: mapToUri(message)}));
+    return methodInvoker({method, path}, (message) => ({uri: mapToUri(message)}));
   };
 }
 
@@ -35,11 +45,11 @@ function body(method) {
   return (path) => {
     const mapToPath = pathMapper(path);
 
-    return methodInvoker(method, (message) => mapToPath(message));
+    return methodInvoker({method, path}, (message) => mapToPath(message));
   };
 }
 
-function methodInvoker(method, getUriAndMessage) {
+function methodInvoker({method, path}, getUriAndMessage) {
   return {
     async invoke(rawMessage, options) {
       const invoker = options.invoker;
@@ -56,6 +66,9 @@ function methodInvoker(method, getUriAndMessage) {
       }
 
       return invoker.invoke(params);
+    },
+    httpRoute() {
+      return {method, path};
     }
   };
 }

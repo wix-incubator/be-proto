@@ -101,6 +101,20 @@ describe('http-binding', () => {
     expect(lastOptions.invocationOption).to.equal('b');
   });
 
+  it('should return http routes', () => {
+    const givenMethod = http(put('/pass/{a}'), message, message);
+
+    expect(givenMethod.httpRoutes()).to.deep.equal([{
+      method: 'put', path: '/pass/{a}'
+    }]);
+  });
+
+  it('should create an invoke function', async() => {
+    const invoke = http(put('/pass/{a}'), message, message).createInvoke((message) => message);
+
+    expect(await invoke({a: 1})).to.deep.equal({a: 1, b: 0});
+  });
+
   function testInvoker(fn) {
     const invocations = [];
     let lastOptions;
