@@ -48,10 +48,8 @@ module.exports = function start(options) {
   };
 };
 
-async function execute(route, res, request, body) {
+async function execute(route, res, request, body = {}) {
   const requestMessage = route.requestMessage;
-  
-  console.log(request, body);
 
   const message = requestMessage.fromValue([request, body]);
 

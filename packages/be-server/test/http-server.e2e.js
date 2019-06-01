@@ -53,7 +53,7 @@ describe('HTTP server', function() {
     });
   });
 
-  it.only('should post typed message', async() => {
+  it('should post typed message', async() => {
     const response = await fetch('http://localhost:9901/api/echo/i-am-a-string?int=99', {
       method: 'POST',
       headers: {
