@@ -20,8 +20,8 @@ function serverBuilder(context = {}) {
     },
     async start(options) {
       const sourcedBindings = context.bindingsSource ? await context.bindingsSource.bindings() : [];
-      const dynamicBindings = context.bindings;
-      
+      const dynamicBindings = context.bindings || [];
+
       const bindings = [...sourcedBindings, ...dynamicBindings];
 
       return startServer({

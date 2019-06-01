@@ -1,4 +1,5 @@
 const {typeUtils} = require('@wix/proto-packages');
+const reference = require('./reference');
 
 module.exports = {
   generateMessageUnit,
@@ -59,7 +60,7 @@ function generateType(messageOrEnumType, jsRefs = {}) {
 function generateMessageUnit(messageType, jsRefs = {}) {
   const {jsFields} = formatMessageFields(messageType, jsRefs);
 
-  const fnCode = `${reference('MessageBuilder', null, jsRefs)}.create()\r\n${jsFields}`;
+  const fnCode = `${reference('messageBuilder', null, jsRefs)}()\r\n${jsFields}`;
 
   return {
     name: messageType.name,
@@ -142,17 +143,4 @@ function formatEnumFields(values) {
   return {
     jsFields: jsFields.join('\r\n')
   };
-}
-
-function reference(id, source, refs) {
-  refs[id] = {
-    id,
-    source
-  };
-
-  if (id.indexOf('.') >= 0) {
-    refs[id].name = id.substr(id.lastIndexOf('.') + 1);
-  }
-
-  return refs[id].name || refs[id].id;
 }

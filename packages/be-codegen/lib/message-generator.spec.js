@@ -19,15 +19,15 @@ describe('message-generator', () => {
 
     const generatedMessage = generateMessageUnit(givenProto.root.nested.a.nested.test.TestMessage);
 
-    expect(generatedMessage.js.code).to.include(`MessageBuilder`);
+    expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.namespace).to.equal('a.test');
     expect(generatedMessage.name).to.equal('TestMessage');
     expect(generatedMessage.js.code).to.include(`.field('testValue', string, 1)`);
     expect(generatedMessage.js.code).to.include(`.repeated('testValues', int64, 2)`);
 
-    expect(_.sortBy(Object.keys(generatedMessage.js.refs))).to.deep.equal(['MessageBuilder', 'int64', 'string']);
-    expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
-      id: 'MessageBuilder',
+    expect(_.sortBy(Object.keys(generatedMessage.js.refs))).to.deep.equal(['int64', 'messageBuilder', 'string']);
+    expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
+      id: 'messageBuilder',
       source: null
     });
   });
@@ -66,15 +66,15 @@ describe('message-generator', () => {
 
     const generatedMessage = generateMessageUnit(givenProto.root.TestMessage);
 
-    expect(generatedMessage.js.code).to.include(`MessageBuilder`);
+    expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.js.code).to.include(`.field('msg', TestMessage2, 1)`);
 
     expect(generatedMessage.js.refs.TestMessage2).to.deep.equal({
       id: 'TestMessage2',
       source: givenProto.root.TestMessage
     });
-    expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
-      id: 'MessageBuilder',
+    expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
+      id: 'messageBuilder',
       source: null
     });
   });
@@ -96,7 +96,7 @@ describe('message-generator', () => {
 
     const generatedMessage = generateMessageUnit(givenProto.root.nested.a.TestMessage);
 
-    expect(generatedMessage.js.code).to.include(`MessageBuilder`);
+    expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.js.code).to.include(`.field('msg', TestMessage2, 1)`);
 
     expect(generatedMessage.js.refs['a.TestMessage2']).to.deep.equal({
@@ -104,8 +104,8 @@ describe('message-generator', () => {
       name: 'TestMessage2',
       source: givenProto.root.nested.a.TestMessage
     });
-    expect(generatedMessage.js.refs.MessageBuilder).to.deep.equal({
-      id: 'MessageBuilder',
+    expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
+      id: 'messageBuilder',
       source: null
     });
   });
@@ -148,7 +148,7 @@ describe('message-generator', () => {
 
     const generatedMessage = generateMessageUnit(givenProto.root.nested.TestMessage);
 
-    expect(generatedMessage.nested.TestNestedMessage.js.code).to.include(`MessageBuilder`);
+    expect(generatedMessage.nested.TestNestedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.nested.TestEnum.js.code).to.include(`EnumBuilder`);
     expect(generatedMessage.js.refs.TestNestedMessage).to.deep.equal({
       id: 'TestNestedMessage',
@@ -176,10 +176,10 @@ describe('message-generator', () => {
     const generatedMessages = generateTypes([givenProto.root.nested.a.TestMessage1, givenProto.root.nested.a.TestMessage2]);
 
     expect(generatedMessages.namespace).to.equal('a');
-    expect(generatedMessages.exports['TestMessage1'].js.code).to.include(`MessageBuilder`);
+    expect(generatedMessages.exports['TestMessage1'].js.code).to.include(`messageBuilder`);
     expect(generatedMessages.exports['TestMessage2']).to.exist;
     expect(generatedMessages.js.refs).to.exist;
 
-    expect(_.sortBy(Object.keys(generatedMessages.js.refs))).to.deep.equal(['MessageBuilder', 'string']);
+    expect(_.sortBy(Object.keys(generatedMessages.js.refs))).to.deep.equal(['messageBuilder', 'string']);
   });
 });

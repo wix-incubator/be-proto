@@ -88,21 +88,32 @@ async function formatDescriptors(context, types) {
 }
 
 function formatMessagesCode(messageDescriptors) {
-  return `module.exports = {
+  return `
     ${Object.keys(messageDescriptors.exports)
       .map((typeName) => formatMessageCode(typeName, messageDescriptors.exports[typeName]))
+      .join(';\r\n')}
+
+  module.exports = {
+    ${Object.keys(messageDescriptors.exports)
+      .map((typeName) => `${typeName}`)
       .join(',\r\n')}
-  }`;
+  };
+  `;
 }
 
 function formatMessageCode(typeName, messageDesc) {
-  return `get ${typeName}: lazy(() => ${messageDesc.js.code}.build())`
+  return `const ${typeName} = ${messageDesc.js.code}.build();`
 }
 
 function formatMethodCode(methodDesc) {
-  return `module.exports = {
-    get ${methodDesc.name}: lazy(() => ${methodDesc.js.code})
-  }`
+  return `
+  const ${methodDesc.methodName} =  ${methodDesc.js.code};
+
+  module.exports = {
+    ${methodDesc.methodName}(message, options) {
+      return ${methodDesc.methodName}.invoke(message, options);
+    }
+  };`
 }
 
 function mapImports(context, desc) {

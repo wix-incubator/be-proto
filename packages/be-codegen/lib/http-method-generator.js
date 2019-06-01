@@ -1,4 +1,5 @@
 const {typeUtils} = require('@wix/proto-packages');
+const reference = require('./reference');
 
 module.exports = {
   generateMethod
@@ -6,17 +7,23 @@ module.exports = {
 
 function generateMethod(serviceMethod) {
   const route = resolveHttpRoute(serviceMethod);
+  const jsRefs = {};
 
-  const requestType = serviceMethod.requestStream ? `stream(${serviceMethod.requestType})` : serviceMethod.requestType;
-  const responseType = serviceMethod.responseStream ? `stream(${serviceMethod.responseType})` : serviceMethod.responseType;
+  reference(serviceMethod.requestType, serviceMethod.parent, jsRefs);
+  reference(serviceMethod.responseType, serviceMethod.parent, jsRefs);
 
-  const fnCode = `http(${route.method}, '${route.path}', ${requestType}, ${responseType})`;
+  const requestType = serviceMethod.requestStream ? `${reference('stream', null, jsRefs)}(${serviceMethod.requestType})` : serviceMethod.requestType;
+  const responseType = serviceMethod.responseStream ? `${reference('stream', null, jsRefs)}(${serviceMethod.responseType})` : serviceMethod.responseType;
+
+  const fnCode = `${reference('http', null, jsRefs)}(${reference(route.method, null, jsRefs)}('${route.path}'), ${requestType}, ${responseType})`;
 
   return {
     name: `${serviceMethod.parent.name}.${serviceMethod.name}`,
+    methodName: serviceMethod.name,
     namespace: typeUtils.resolveNamespace(serviceMethod.parent),
     js: {
-      code: fnCode
+      code: fnCode,
+      refs: jsRefs
     }
   };
 }
