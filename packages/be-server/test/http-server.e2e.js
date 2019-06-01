@@ -2,12 +2,16 @@ const beServer = require('..');
 const fetch = require('node-fetch');
 const {expect} = require('chai');
 const path = require('path');
+const {httpBinding, messageBuilder, wellKnownTypes} = require('@wix/be-http-binding');
+const {http, get} = httpBinding;
 
 describe('HTTP server', function() {
 
   this.timeout(10000);
 
   let server;
+
+  const echoMessage = messageBuilder().field('message', wellKnownTypes.string, 1).build();
 
   before(async() => {
     server = await beServer.builder()
@@ -17,6 +21,10 @@ describe('HTTP server', function() {
         echo: (message) => message,
         postEcho: (message) => message,
         typesEcho: (message) => message,
+      })
+      .withBindings({
+        binding: http(get('/dynamic-echo'), echoMessage, echoMessage),
+        invoke: (message) => message
       })
       .start({ port: 9901 });
   });

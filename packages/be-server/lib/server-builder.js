@@ -32,6 +32,11 @@ function serverBuilder(context = {}) {
         ...context
       });
     },
+    withBindings(bindings) {
+      return serverBuilder({
+        bindings
+      });
+    },
     async start(options) {
       const protoContext = create({
         contextDir: context.contextDir || defaultContextDir,
