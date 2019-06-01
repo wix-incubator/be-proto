@@ -34,17 +34,27 @@ function defineField(context, name, type, modifier, props) {
 
 function message(context) {
   return {
+    isMessageType: true,
     fromValue(value) {
+      if (!value) {
+        return null;
+      }
+
+      const sources = valueSource(value);
+
       const result = {};
       const valueModifiers = [];
 
       Object.keys(context).forEach((field) => {
         const {repeated, modifier, type} = context[field];
+        const fieldValues = sources.find(field);
 
         if (repeated) {
-          result[field] = (Array.isArray(value[field]) ? value[field] : [value[field]]).map((value) => type.fromValue(value));
+          result[field] = (Array.isArray(fieldValues[0]) ? fieldValues[0] : [fieldValues[0]]).map((value) => type.fromValue(value));
+        } else if (type.isMessageType) {
+          result[field] = type.fromValue(fieldValues);
         } else {
-          result[field] = type.fromValue(value[field]);
+          result[field] = type.fromValue(fieldValues[0]);
         }
 
         if (modifier && modifier.value) {
@@ -78,6 +88,24 @@ function assignTag(tag) {
       return {
         tag
       };
+    }
+  }
+}
+
+function valueSource(value) {
+  const sources = Array.isArray(value) ? value : [value];
+
+  return {
+    find(name) {
+      const matches = [];
+
+      for (let i = 0; i < sources.length; i++) {
+        if (sources[i][name]) {
+          matches.push(sources[i][name]);
+        }
+      }
+
+      return matches;
     }
   }
 }

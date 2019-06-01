@@ -56,6 +56,42 @@ describe('message-builder', () => {
     });
   });
 
+  it('should return null on undefined value', () => {
+    const message = messageBuilder()
+      .field('name', string, 1)
+      .build();
+
+    expect(message.fromValue()).to.be.null;
+  });
+
+  it('should read from multiple sources', () => {
+    const message = messageBuilder()
+      .field('name', string, 1)
+      .field('surname', string, 2)
+      .build();
+
+    expect(message.fromValue([{name: 'John'}, {surname: 'Smith'}])).to.deep.equal({
+      name: 'John',
+      surname: 'Smith'
+    });
+  });
+
+  it('should read from multiple nested sources', () => {
+    const message = messageBuilder()
+      .field('person', messageBuilder()
+        .field('name', string, 1)
+        .field('surname', string, 2)
+        .build(), 1)
+      .build();
+
+    expect(message.fromValue([{person:{name: 'John'}}, {person: {surname: 'Smith'}}])).to.deep.equal({
+      person: {
+        name: 'John',
+        surname: 'Smith'
+      }
+    });
+  });
+
   function sumOf(fieldName) {
     return {
       value(message) {
