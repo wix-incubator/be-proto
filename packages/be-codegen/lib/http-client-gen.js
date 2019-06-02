@@ -79,7 +79,6 @@ async function formatDescriptors(context, types) {
   descriptors = descriptors.concat(await Promise.all(methods.map(async(method) => {
     const methodDesc = generateMethod(method);
     const {jsCode, tsCode} = formatMethodCode(methodDesc);
-    const imports = await mapImports(context, methodDesc);
 
     return {
       namespace: methodDesc.namespace,
@@ -124,17 +123,20 @@ function formatMessageCode(typeName, messageDesc) {
 }
 
 function formatMethodCode(methodDesc) {
+  const binding = methodDesc.exports.binding;
+  const invoke = methodDesc.exports.invoke;
+
   return {
     jsCode: `
-      const ${methodDesc.methodName} =  ${methodDesc.js.code};
+      const ${methodDesc.methodName} =  ${binding.js.code};
 
       module.exports = {
-        ${methodDesc.methodName}(message, options) {
-          return ${methodDesc.methodName}.invoke(message, options);
-        }
+        ${methodDesc.methodName},
+        ${invoke.js.code}
       };`,
     tsCode: `
-      export ${methodDesc.ts.code};
+      export ${binding.ts.code};
+      export ${invoke.ts.code};
     `
   };
 }

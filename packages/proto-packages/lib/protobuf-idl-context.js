@@ -47,7 +47,7 @@ function create(options) {
 
     const {roots, packageFiles} = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
 
-    debug(`Resolved ${Object.keys(roots).length} and ${packageFiles.length} package files`);
+    debug(`Resolved ${Object.keys(roots).length} roots and ${packageFiles.length} package files`);
 
     return new ResolutionRoot({
       origin: contextDir,

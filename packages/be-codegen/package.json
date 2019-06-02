@@ -13,7 +13,10 @@
     "copy:proto": "mkdir -p test/proto/google/api && cp node_modules/@wix/well-known-protos/googleapis/google/api/http.proto test/proto/google/api/",
     "pretest": "npm run copy:proto",
     "build:e2e-gen": "DEBUG=be* node ./scripts/be.js http-client --work-dir test/fixtures/simple-proto-service --extra test/proto --output ./target/test-output/simple-proto-service test.MessageService",
-    "test": "mocha -r ts-node/register test/**/*.js test/**/*.ts lib/**/*.spec.js --reporter mocha-env-reporter",
+    "unit": "mocha lib/**/*.spec.js --reporter mocha-env-reporter",
+    "it": "mocha test --reporter mocha-env-reporter",
+    "it:ts": "mocha -r ts-node/register test/**/*.ts --reporter mocha-env-reporter",
+    "test": "npm run unit && npm run it && npm run it:ts",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "bin": {

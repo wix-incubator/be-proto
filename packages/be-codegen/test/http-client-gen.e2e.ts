@@ -1,21 +1,17 @@
 import * as fetch from 'node-fetch';
 import {expect} from 'chai';
 import * as beServer from '@wix/be-server';
-import {Get} from '../target/test-output/simple-proto-service/test/MessageService.Get';
+import {Get, get} from '../target/test-output/simple-proto-service/test/MessageService.Get';
 import {Message} from '../target/test-output/simple-proto-service/test/Message';
 
-export interface Global {
-  fetch: any;
-}
-
-declare var global: Global;
-
-describe.skip('http-client-gen', function() {
+describe('http-client-gen', function() {
 
   let server: beServer.Server;
 
-  before(() => global.fetch = fetch);
-  after(() => delete global.fetch);
+  const globalAny:any = global;
+
+  before(() => globalAny.fetch = fetch);
+  after(() => delete globalAny.fetch);
 
   before(async() => {
     server = await beServer.builder()
@@ -29,10 +25,11 @@ describe.skip('http-client-gen', function() {
   after(() => server.stop());
 
   it('should generate an http fetch client', async() => {
-    const result = await Get({
+    const result = await get({
       name: 'John'
     }, {
-      baseUrl: 'http://localhost:9901'
+      baseUrl: 'http://localhost:9901',
+      fetch
     });
 
     expect(result).to.deep.equal({

@@ -15,23 +15,45 @@ function generateMethod(serviceMethod) {
   const tsRequestType = refs.tsReference(serviceMethod.requestType, serviceMethod.parent);
   const tsResponseType = refs.tsReference(serviceMethod.responseType, serviceMethod.parent);
 
-  const fnCode = `${refs.jsReference('http')}(${refs.jsReference(route.method)}('${route.path}'), ` +
+  const bindingJsCode = `${refs.jsReference('http')}(${refs.jsReference(route.method)}('${route.path}'), ` +
     `${formatJsArgument(requestType, serviceMethod.requestStream, refs)}, ` +
     `${formatJsArgument(responseType, serviceMethod.responseStream, refs)})`;
 
-  const tsCode = `function ${serviceMethod.name}(request: ${formatTsArgument(tsRequestType, serviceMethod.requestStream, refs)}, options?: ${refs.tsReference('CallOptions')}): ` +
+  const methodNameSmall = toSmallCap(serviceMethod.name);
+
+  const tsInvocationCode = `function ${methodNameSmall}(request: ${formatTsArgument(tsRequestType, serviceMethod.requestStream, refs)}, options?: ${refs.tsReference('CallOptions')}): ` +
     `${formatTsArgument(tsResponseType, serviceMethod.responseStream, refs, true)}`;
 
   return {
     name: `${serviceMethod.parent.name}.${serviceMethod.name}`,
     methodName: serviceMethod.name,
+    methodNameSmall,
     namespace: typeUtils.resolveNamespace(serviceMethod.parent),
+    exports: {
+      binding: {
+        js: {
+          code: bindingJsCode
+        },
+        ts: {
+          code: `const ${serviceMethod.name}: ${refs.tsReference('HttpBinding')}`
+        }
+      },
+      invoke: {
+        js: {
+          code: `
+          ${methodNameSmall}(message, options) {
+            return ${serviceMethod.name}.invoke(message, options);
+          }`
+        },
+        ts: {
+          code: tsInvocationCode
+        }
+      }
+    },
     js: {
-      code: fnCode,
       refs: refs.jsRefs
     },
     ts: {
-      code: tsCode,
       refs: refs.tsRefs
     }
   };
@@ -80,4 +102,8 @@ function resolveHttpRoute(method) {
   }
 
   return route;
+}
+
+function toSmallCap(value) {
+  return value.charAt(0).toLowerCase() + value.slice(1);
 }
