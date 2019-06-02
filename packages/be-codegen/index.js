@@ -12,6 +12,8 @@ function main(args) {
 
   args = terminator >= 0 ? args.slice(0, terminator) : args;
 
+  debug('Executing command', args[0]);
+
   if (args[0] === 'pbjs') {
     return runPbjs(args.slice(1), extraArgs);
   }
