@@ -19,7 +19,7 @@ function generateMethod(serviceMethod) {
     `${formatJsArgument(requestType, serviceMethod.requestStream, refs)}, ` +
     `${formatJsArgument(responseType, serviceMethod.responseStream, refs)})`;
 
-  const tsCode = `function ${serviceMethod.name}(request: ${formatTsArgument(tsRequestType, serviceMethod.requestStream, refs)}):` +
+  const tsCode = `function ${serviceMethod.name}(request: ${formatTsArgument(tsRequestType, serviceMethod.requestStream, refs)}): ` +
     `${formatTsArgument(tsResponseType, serviceMethod.responseStream, refs, true)}`;
 
   return {

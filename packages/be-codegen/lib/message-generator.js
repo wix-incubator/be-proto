@@ -108,7 +108,7 @@ function formatMessageFields(messageType, refs) {
     const jsFieldModifier = field.partOf ? `${refs.jsReference('oneOf')}('${field.partOf.name}', ${field.id})` : field.id;
 
     jsFields.push(`.${jsFieldMethod}('${field.name}', ${refs.jsReference(field.type, messageType)}, ${jsFieldModifier})`);
-    tsFields.push(`${field.name}${field.partOf ? '?' : ''}: ${refs.jsReference(field.type, messageType)}${field.repeated ? '[]' : ''}`);
+    tsFields.push(`${field.name}${field.partOf ? '?' : ''}: ${refs.tsReference(field.type, messageType)}${field.repeated ? '[]' : ''}`);
   });
 
   return {

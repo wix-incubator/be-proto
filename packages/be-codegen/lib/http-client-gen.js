@@ -115,7 +115,6 @@ function formatMessagesCode(messageDescriptors) {
       ${Object.keys(messageDescriptors.exports)
         .map((typeName) => messageDescriptors.exports[typeName].ts.code)
         .join(';\r\n')}
-    }
     `
   };
 }
