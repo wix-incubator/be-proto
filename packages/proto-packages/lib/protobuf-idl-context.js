@@ -55,12 +55,14 @@ function create(options) {
 async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages = []) {
   const result = await klaw(contextDir, { preserveSymlinks: true });
 
+  extraPackages = extraPackages.map((packagePath) => path.resolve(packagePath));
+
   const protoFiles = [];
   const packageFiles = [];
   const packageDirs = extraPackages.slice();
   const links = [];
 
-  await collectProtofilesTo(extraPackages, protoFiles);
+  await collectProtofilesTo(packageDirs, protoFiles);
 
   const currentDir = path.resolve(contextDir);
 
