@@ -4,6 +4,7 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const {httpClientGen} = require('./lib/http-client-gen');
 const {outputToFiles} = require('./lib/output-to-files');
+const debug = require('debug')('be-codegen');
 
 function main(args) {
   const terminator = args.indexOf('--');
@@ -41,12 +42,18 @@ async function runHttpClientGen(rawArgs) {
     }
   };
 
+  debug('Will output to', args['output']);
+
   const output = outputToFiles(args['output'], cons);
 
   await httpClientGen(context).generate(args._, output);
 
+  debug('Generation complete');
+
   try {
     await output.done();
+    
+    debug('Output processed');
   } catch(e) {
     cons.log('ERROR:', e);
   }
@@ -63,14 +70,18 @@ function createContext(args) {
   const sourceRoots = args['source-roots'] ? args['source-roots'].split(',') : ['proto', 'src/main/proto'];
   const extra = args['extra'];
 
+  const options = {
+    contextDir: workDir,
+    sourceRoots,
+    extraPackages: extra ? [extra] : []
+  };
+
+  debug('Creating context', options);
+
   return {
     workDir,
     args,
-    context: create({
-      contextDir: workDir,
-      sourceRoots,
-      extraPackages: extra ? [extra] : []
-    })
+    context: create(options)
   };
 }
 
