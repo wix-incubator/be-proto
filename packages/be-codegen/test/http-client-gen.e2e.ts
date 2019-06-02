@@ -26,14 +26,16 @@ describe('http-client-gen', function() {
 
   it('should generate an http fetch client', async() => {
     const result = await get({
-      name: 'John'
+      name: 'John',
+      stringValue: 'Hello'
     }, {
       baseUrl: 'http://localhost:9901',
       fetch
     });
 
     expect(result).to.deep.equal({
-      name: 'John'
+      name: 'John',
+      stringValue: 'Hello'
     });
   });
 });

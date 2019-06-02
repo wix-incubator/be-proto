@@ -38,6 +38,27 @@ describe('http-binding', () => {
     });
   });
 
+  it('should invoke the GET method with multiple values', async() => {
+    const givenMethod = http(get('/pass'), message, message, {invoker});
+
+    const result = await givenMethod.invoke({
+      a: 1,
+      b: 2
+    });
+
+    expect(result).to.deep.equal({
+      a: 1,
+      b: 2
+    });
+
+    expect(invoker.invocations()).to.have.length(1);
+    expect(invoker.invocations()[0]).to.deep.equal({
+      method: 'get',
+      uri: '/pass?a=1&b=2',
+      message: undefined
+    });
+  });
+
   it('should invoke a POST method', async() => {
     const givenMethod = http(post('/pass'), message, message, {invoker});
 

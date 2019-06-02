@@ -98,10 +98,12 @@ async function formatDescriptors(context, types) {
 }
 
 function formatMessagesCode(messageDescriptors) {
+  const typesToExport = Object.keys(messageDescriptors.exports).length;
+
   return {
-    jsCode: `
+    jsCode: typesToExport > 1 ? `
       ${Object.keys(messageDescriptors.exports)
-        .map((typeName) => formatMessageCode(typeName, messageDescriptors.exports[typeName]))
+        .map((typeName) => `const ${typeName} = ${formatMessageCode(messageDescriptors.exports[typeName])}`)
         .join(';\r\n')}
 
     module.exports = {
@@ -109,7 +111,11 @@ function formatMessagesCode(messageDescriptors) {
         .map((typeName) => `${typeName}`)
         .join(',\r\n')}
     };
-    `,
+    ` : `module.exports = {
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => `${typeName}: ${formatMessageCode(messageDescriptors.exports[typeName])}`)
+        .join(',\r\n')}
+    };`,
     tsCode: `
       ${Object.keys(messageDescriptors.exports)
         .map((typeName) => messageDescriptors.exports[typeName].ts.code)
@@ -118,8 +124,8 @@ function formatMessagesCode(messageDescriptors) {
   };
 }
 
-function formatMessageCode(typeName, messageDesc) {
-  return `const ${typeName} = ${messageDesc.js.code}.build();`
+function formatMessageCode(messageDesc) {
+  return messageDesc.js.code;
 }
 
 function formatMethodCode(methodDesc) {

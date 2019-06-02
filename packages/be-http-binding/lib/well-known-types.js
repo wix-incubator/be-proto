@@ -21,5 +21,10 @@ module.exports = {
 
       return 0 + value;
     }
+  },
+  StringValue: {
+    fromValue(value) {
+      return value ? value.toString() : null;
+    }
   }
 };

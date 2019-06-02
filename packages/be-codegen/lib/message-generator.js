@@ -1,6 +1,12 @@
 const {typeUtils} = require('@wix/proto-packages');
 const codeReferences = require('./code-references');
 
+const wellKnownTypes = {
+  'google.protobuf.StringValue': {
+    name: 'StringValue'
+  }
+};
+
 module.exports = {
   generateMessageUnit,
   generateEnum,
@@ -34,7 +40,11 @@ function generateTypes(types) {
 }
 
 function generateType(messageOrEnumType, refs = codeReferences([messageOrEnumType])) {
-  if (messageOrEnumType.fields) {
+  const fqn = typeUtils.resolveFullyQualifiedName(messageOrEnumType);
+
+  if (wellKnownTypes[fqn]) {
+    return generateReexport(messageOrEnumType, wellKnownTypes[fqn], refs);
+  } else if (messageOrEnumType.fields) {
     return generateMessageUnit(messageOrEnumType, refs);
   } else if (messageOrEnumType.values) {
     return generateEnum(messageOrEnumType, refs);
@@ -44,7 +54,7 @@ function generateType(messageOrEnumType, refs = codeReferences([messageOrEnumTyp
 function generateMessageUnit(messageType, refs = codeReferences([messageType])) {
   const {jsFields, tsFields} = formatMessageFields(messageType, refs);
 
-  const jsCode = `${refs.jsReference('messageBuilder')}()\r\n${jsFields}`;
+  const jsCode = `${refs.jsReference('messageBuilder')}()\r\n${jsFields}.build()`;
   const tsCode = `abstract class ${messageType.name} extends ${refs.tsReference('be')}.Message\r\n { ${tsFields}\r\n }`;
 
   return {
@@ -63,10 +73,30 @@ function generateMessageUnit(messageType, refs = codeReferences([messageType])) 
   };
 }
 
+function generateReexport(messageOrEnumType, metadata, refs) {
+  const jsCode = `${refs.jsReference(metadata.name)}`;
+  const tsCode = `${refs.tsReference(messageOrEnumType.name)}`;
+
+  return {
+    name: messageOrEnumType.name,
+    namespace: typeUtils.resolveNamespace(messageOrEnumType),
+    nested: collectNestedTypes(messageOrEnumType),
+    messageOrEnumType,
+    js: {
+      refs: refs.jsRefs,
+      code: jsCode
+    },
+    ts: {
+      refs: refs.tsRefs,
+      code: tsCode
+    }
+  };
+}
+
 function generateEnum(enumType, refs = codeReferences([enumType])) {
   const {jsFields} = formatEnumFields(enumType.values);
 
-  const fnCode = `${refs.jsReference('EnumBuilder')}.create()${jsFields}`;
+  const fnCode = `${refs.jsReference('EnumBuilder')}.create()${jsFields}.build()`;
 
   return {
     name: enumType.name,

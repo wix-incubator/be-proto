@@ -106,7 +106,7 @@ function pathMapper(path) {
 function valueToQuery(value) {
   const flattenedValues = flattenValues(value);
 
-  return flattenedValues.map(({value, path}) => `${path}=${value}`);
+  return flattenedValues.map(({value, path}) => `${encodeURI(path)}=${encodeURI(value)}`).join('&');
 }
 
 function flattenValues(value, path = '') {

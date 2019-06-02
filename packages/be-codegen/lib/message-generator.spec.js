@@ -1,9 +1,9 @@
-const {generateMessageUnit, generateEnum, generateTypes} = require('./message-generator');
+const {generateMessageUnit, generateEnum, generateType, generateTypes} = require('./message-generator');
 const protobuf = require('protobufjs');
 const {expect} = require('chai');
 const _ = require('lodash');
 
-describe('message-generator', () => {
+describe.only('message-generator', () => {
 
   it('should generate a message', () => {
     const givenProto = protobuf.parse(`
@@ -112,6 +112,32 @@ describe('message-generator', () => {
     expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
       id: 'messageBuilder',
       source: null
+    });
+  });
+
+  it('should re-export a well-known-type', () => {
+    const givenProto = protobuf.parse(`
+      syntax = "proto3";
+
+      package google.protobuf;
+
+      message StringValue {        
+      }
+    `);
+
+    const generatedMessage = generateType(givenProto.root.nested.google.nested.protobuf.StringValue);
+
+    expect(generatedMessage.js.refs).to.deep.equal({
+      StringValue: {
+        id: 'StringValue',
+        source: null
+      }
+    });
+    expect(generatedMessage.ts.refs).to.deep.equal({
+      StringValue: {
+        id: 'StringValue',
+        source: null
+      }
     });
   });
 
