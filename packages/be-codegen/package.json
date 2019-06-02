@@ -13,7 +13,7 @@
     "copy:proto": "mkdir -p test/proto/google/api && cp node_modules/@wix/well-known-protos/googleapis/google/api/http.proto test/proto/google/api/",
     "pretest": "npm run copy:proto",
     "build:e2e-gen": "DEBUG=be* node ./scripts/be.js http-client --work-dir test/fixtures/simple-proto-service --extra test/proto --output ./target/test-output/simple-proto-service test.MessageService",
-    "test": "mocha -r ts-node/register test lib/**/*.spec.js --reporter mocha-env-reporter",
+    "test": "mocha -r ts-node/register test/**/*.js test/**/*.ts lib/**/*.spec.js --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "bin": {
@@ -34,6 +34,7 @@
     "node-eval": "^2.0.0",
     "node-fetch": "^2.6.0",
     "ts-node": "^8.2.0",
+    "tslib": "^1.9.3",
     "typescript": "^3.5.1",
     "wnpm-ci": "^6.2.55"
   },

@@ -10,7 +10,7 @@ export interface Global {
 
 declare var global: Global;
 
-describe.only('http-client-gen', function() {
+describe.skip('http-client-gen', function() {
 
   let server: beServer.Server;
 
