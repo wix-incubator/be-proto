@@ -23,6 +23,10 @@ function httpClientGen(context) {
               js: {
                 imports: desc.js.imports,
                 code: desc.js.code
+              },
+              ts: {
+                imports: desc.ts.imports,
+                code: desc.ts.code
               }
             });
           });
@@ -54,32 +58,39 @@ async function formatDescriptors(context, types) {
   const numTypesToExport = typeNamesToExport.length;
 
   if (numTypesToExport > 0) {
-    const code = formatMessagesCode(messageDescriptors);
-    const imports = await mapImports(context, messageDescriptors);
-
     const name = numTypesToExport > 1 ? `agg_${typeNamesToExport.join('_')}` : typeNamesToExport[0];
+
+    const {jsCode, tsCode} = formatMessagesCode(messageDescriptors);
 
     descriptors = descriptors.concat([{
       namespace: messageDescriptors.namespace,
       name,
       js: {
-        code,
-        imports
+        code: jsCode,
+        imports: await mapImports(context, messageDescriptors.js.refs)
+      },
+      ts: {
+        code: tsCode,
+        imports: await mapImports(context, messageDescriptors.ts.refs)
       }
     }]);
   }
 
   descriptors = descriptors.concat(await Promise.all(methods.map(async(method) => {
     const methodDesc = generateMethod(method);
-    const code = formatMethodCode(methodDesc);
+    const {jsCode, tsCode} = formatMethodCode(methodDesc);
     const imports = await mapImports(context, methodDesc);
 
     return {
       namespace: methodDesc.namespace,
       name: methodDesc.name,
       js: {
-        code,
-        imports
+        code: jsCode,
+        imports: await mapImports(context, methodDesc.js.refs)
+      },
+      ts: {
+        code: tsCode,
+        imports: await mapImports(context, methodDesc.ts.refs)
       }
     }
   })));
@@ -88,17 +99,25 @@ async function formatDescriptors(context, types) {
 }
 
 function formatMessagesCode(messageDescriptors) {
-  return `
-    ${Object.keys(messageDescriptors.exports)
-      .map((typeName) => formatMessageCode(typeName, messageDescriptors.exports[typeName]))
-      .join(';\r\n')}
+  return {
+    jsCode: `
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => formatMessageCode(typeName, messageDescriptors.exports[typeName]))
+        .join(';\r\n')}
 
-  module.exports = {
-    ${Object.keys(messageDescriptors.exports)
-      .map((typeName) => `${typeName}`)
-      .join(',\r\n')}
+    module.exports = {
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => `${typeName}`)
+        .join(',\r\n')}
+    };
+    `,
+    tsCode: `
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => messageDescriptors.exports[typeName].ts.code)
+        .join(';\r\n')}
+    }
+    `
   };
-  `;
 }
 
 function formatMessageCode(typeName, messageDesc) {
@@ -106,19 +125,22 @@ function formatMessageCode(typeName, messageDesc) {
 }
 
 function formatMethodCode(methodDesc) {
-  return `
-  const ${methodDesc.methodName} =  ${methodDesc.js.code};
+  return {
+    jsCode: `
+      const ${methodDesc.methodName} =  ${methodDesc.js.code};
 
-  module.exports = {
-    ${methodDesc.methodName}(message, options) {
-      return ${methodDesc.methodName}.invoke(message, options);
-    }
-  };`
+      module.exports = {
+        ${methodDesc.methodName}(message, options) {
+          return ${methodDesc.methodName}.invoke(message, options);
+        }
+      };`,
+    tsCode: `
+      export ${methodDesc.ts.code};
+    `
+  };
 }
 
-function mapImports(context, desc) {
-  const refs = desc.js.refs || {};
-
+function mapImports(context, refs) {
   return Promise.all(Object.keys(refs).map((name) => mapImport(context, name, refs[name])));
 }
 

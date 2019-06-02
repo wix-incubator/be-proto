@@ -19,11 +19,16 @@ describe('message-generator', () => {
 
     const generatedMessage = generateMessageUnit(givenProto.root.nested.a.nested.test.TestMessage);
 
-    expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.namespace).to.equal('a.test');
     expect(generatedMessage.name).to.equal('TestMessage');
+
+    expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.js.code).to.include(`.field('testValue', string, 1)`);
     expect(generatedMessage.js.code).to.include(`.repeated('testValues', int64, 2)`);
+    
+    expect(generatedMessage.ts.code).to.include(`abstract class TestMessage extends Message`);
+    expect(generatedMessage.ts.code).to.include(`testValue: string`);
+    expect(generatedMessage.ts.code).to.include(`testValues: int64[]`);
 
     expect(_.sortBy(Object.keys(generatedMessage.js.refs))).to.deep.equal(['int64', 'messageBuilder', 'string']);
     expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({

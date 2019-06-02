@@ -1,5 +1,5 @@
 const {typeUtils} = require('@wix/proto-packages');
-const reference = require('./reference');
+const codeReferences = require('./code-references');
 
 module.exports = {
   generateMethod
@@ -7,15 +7,20 @@ module.exports = {
 
 function generateMethod(serviceMethod) {
   const route = resolveHttpRoute(serviceMethod);
-  const jsRefs = {};
+  const refs = codeReferences();
 
-  reference(serviceMethod.requestType, serviceMethod.parent, jsRefs);
-  reference(serviceMethod.responseType, serviceMethod.parent, jsRefs);
+  const requestType = refs.jsReference(serviceMethod.requestType, serviceMethod.parent);
+  const responseType = refs.jsReference(serviceMethod.responseType, serviceMethod.parent);
 
-  const requestType = serviceMethod.requestStream ? `${reference('stream', null, jsRefs)}(${serviceMethod.requestType})` : serviceMethod.requestType;
-  const responseType = serviceMethod.responseStream ? `${reference('stream', null, jsRefs)}(${serviceMethod.responseType})` : serviceMethod.responseType;
+  const tsRequestType = refs.tsReference(serviceMethod.requestType, serviceMethod.parent);
+  const tsResponseType = refs.tsReference(serviceMethod.responseType, serviceMethod.parent);
 
-  const fnCode = `${reference('http', null, jsRefs)}(${reference(route.method, null, jsRefs)}('${route.path}'), ${requestType}, ${responseType})`;
+  const fnCode = `${refs.jsReference('http')}(${refs.jsReference(route.method)}('${route.path}'), ` +
+    `${formatJsArgument(requestType, serviceMethod.requestStream, refs)}, ` +
+    `${formatJsArgument(responseType, serviceMethod.responseStream, refs)})`;
+
+  const tsCode = `function ${serviceMethod.name}(request: ${formatTsArgument(tsRequestType, serviceMethod.requestStream, refs)}):` +
+    `${formatTsArgument(tsResponseType, serviceMethod.responseStream, refs, true)}`;
 
   return {
     name: `${serviceMethod.parent.name}.${serviceMethod.name}`,
@@ -23,9 +28,21 @@ function generateMethod(serviceMethod) {
     namespace: typeUtils.resolveNamespace(serviceMethod.parent),
     js: {
       code: fnCode,
-      refs: jsRefs
+      refs: refs.jsRefs
+    },
+    ts: {
+      code: tsCode,
+      refs: refs.tsRefs
     }
   };
+}
+
+function formatJsArgument(typeName, isStream, refs) {
+  return isStream ? `${refs.jsReference('stream')}(${typeName})` : typeName;
+}
+
+function formatTsArgument(typeName, isStream, refs, deferred) {
+  return isStream ? `${refs.tsReference('Stream')}(${typeName})` : (deferred ? `Promise<${typeName}>` : typeName);
 }
 
 const supportedMethods = {

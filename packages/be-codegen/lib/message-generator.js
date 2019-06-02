@@ -1,5 +1,5 @@
 const {typeUtils} = require('@wix/proto-packages');
-const reference = require('./reference');
+const codeReferences = require('./code-references');
 
 module.exports = {
   generateMessageUnit,
@@ -9,58 +9,43 @@ module.exports = {
 };
 
 function generateTypes(types) {
-  const jsRefs = {};
-  const generated = types.map((type) => generateType(type, jsRefs)).filter((desc) => desc);
+  const refs = codeReferences(types);
+  const generated = types.map((type) => generateType(type, refs)).filter((desc) => desc);
   const exports = {};
 
-  generated.forEach(({name, messageType, js}) => {
+  generated.forEach(({name, messageType, js, ts}) => {
     exports[name] = {
       messageType,
-      js
+      js,
+      ts
     };
   });
-
-  pruneLocalImports(jsRefs, types);
 
   return {
     namespace: generated.length > 0 ? generated[0].namespace: undefined,
     exports,
     js: {
-      refs: jsRefs
+      refs: refs.jsRefs
+    },
+    ts: {
+      refs: refs.tsRefs
     }
   };
 }
 
-function pruneLocalImports(jsRefs, messageOrEnumTypes) {
-  const fqn = messageOrEnumTypes.map((type) => typeUtils.resolveFullyQualifiedName(type));
-
-  Object.keys(jsRefs).forEach((refName) => {
-    if (jsRefs[refName].source) {
-      const refType = jsRefs[refName].source.lookup(refName);
-
-      if (refType) {
-        const refTypeName = typeUtils.resolveFullyQualifiedName(refType);
-
-        if (fqn.indexOf(refTypeName) >= 0) {
-          delete jsRefs[refName];
-        }
-      }
-    }
-  });
-}
-
-function generateType(messageOrEnumType, jsRefs = {}) {
+function generateType(messageOrEnumType, refs = codeReferences([messageOrEnumType])) {
   if (messageOrEnumType.fields) {
-    return generateMessageUnit(messageOrEnumType, jsRefs);
+    return generateMessageUnit(messageOrEnumType, refs);
   } else if (messageOrEnumType.values) {
-    return generateEnum(messageOrEnumType, jsRefs);
+    return generateEnum(messageOrEnumType, refs);
   }
 }
 
-function generateMessageUnit(messageType, jsRefs = {}) {
-  const {jsFields} = formatMessageFields(messageType, jsRefs);
+function generateMessageUnit(messageType, refs = codeReferences([messageType])) {
+  const {jsFields, tsFields} = formatMessageFields(messageType, refs);
 
-  const fnCode = `${reference('messageBuilder', null, jsRefs)}()\r\n${jsFields}`;
+  const jsCode = `${refs.jsReference('messageBuilder')}()\r\n${jsFields}`;
+  const tsCode = `abstract class ${messageType.name} extends ${refs.tsReference('Message')}\r\n { ${tsFields}\r\n }`;
 
   return {
     name: messageType.name,
@@ -68,27 +53,27 @@ function generateMessageUnit(messageType, jsRefs = {}) {
     nested: collectNestedTypes(messageType),
     messageType,
     js: {
-      refs: jsRefs,
-      code: fnCode
+      refs: refs.jsRefs,
+      code: jsCode
     },
     ts: {
-      refs: [],
-      code: ``
+      refs: refs.tsRefs,
+      code: tsCode
     }
   };
 }
 
-function generateEnum(enumType, jsRefs = {}) {
+function generateEnum(enumType, refs = codeReferences([enumType])) {
   const {jsFields} = formatEnumFields(enumType.values);
 
-  const fnCode = `${reference('EnumBuilder', null, jsRefs)}.create()${jsFields}`;
+  const fnCode = `${refs.jsReference('EnumBuilder')}.create()${jsFields}`;
 
   return {
     name: enumType.name,
     namespace: typeUtils.resolveNamespace(enumType),
     enumType,
     js: {
-      refs: jsRefs,
+      refs: refs.jsRefs,
       code: fnCode
     },
     ts: {
@@ -114,20 +99,21 @@ function collectNestedTypes(node) {
   return nested;
 }
 
-function formatMessageFields(messageType, jsRefs) {
+function formatMessageFields(messageType, refs) {
   const jsFields = [];
+  const tsFields = [];
 
   Object.values(messageType.fields).forEach((field) => {
-    const fieldMethod = field.repeated ? 'repeated' : 'field';
-    const fieldModifier = field.partOf ? `${reference('oneOf', null, jsRefs)}('${field.partOf.name}', ${field.id})` : field.id;
+    const jsFieldMethod = field.repeated ? 'repeated' : 'field';
+    const jsFieldModifier = field.partOf ? `${refs.jsReference('oneOf')}('${field.partOf.name}', ${field.id})` : field.id;
 
-    const source = messageType;
-
-    jsFields.push(`.${fieldMethod}('${field.name}', ${reference(field.type, source, jsRefs)}, ${fieldModifier})`);
+    jsFields.push(`.${jsFieldMethod}('${field.name}', ${refs.jsReference(field.type, messageType)}, ${jsFieldModifier})`);
+    tsFields.push(`${field.name}${field.partOf ? '?' : ''}: ${refs.jsReference(field.type, messageType)}${field.repeated ? '[]' : ''}`);
   });
 
   return {
-    jsFields: jsFields.join('\r\n')
+    jsFields: jsFields.join('\r\n'),
+    tsFields: tsFields.join('\r\n')
   };
 }
 
