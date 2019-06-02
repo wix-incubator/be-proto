@@ -26,7 +26,7 @@ describe('message-generator', () => {
     expect(generatedMessage.js.code).to.include(`.field('testValue', string, 1)`);
     expect(generatedMessage.js.code).to.include(`.repeated('testValues', int64, 2)`);
     
-    expect(generatedMessage.ts.code).to.include(`abstract class TestMessage extends Message`);
+    expect(generatedMessage.ts.code).to.include(`abstract class TestMessage extends be.Message`);
     expect(generatedMessage.ts.code).to.include(`testValue: string`);
     expect(generatedMessage.ts.code).to.include(`testValues: int64[]`);
 
