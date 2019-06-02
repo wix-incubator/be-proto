@@ -20,7 +20,9 @@ function outputToFiles(outputDir, output = console) {
   return {
     add(code) {
       const relativeBasename = code.namespace ? `${code.namespace}/${code.name}` : `${code.name}`;
-      const promise = outputFile(outputDir, relativeBasename, code).then(() => output.log(`== Generated ${relativeBasename}`));
+      const promise = outputFile(outputDir, relativeBasename, code)
+        .then(() => output.log(`== Generated ${relativeBasename}`))
+        .catch((e) => output.log(`== Failed ${relativeBasename}: ${e}`));
 
       pendingPromises.push(promise);
     },
