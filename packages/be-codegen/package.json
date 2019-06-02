@@ -9,7 +9,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": "tsc --declaration",
+    "build": "npm run build:e2e-gen && tsc --declaration",
     "copy:proto": "mkdir -p test/proto/google/api && cp node_modules/@wix/well-known-protos/googleapis/google/api/http.proto test/proto/google/api/",
     "pretest": "npm run copy:proto",
     "build:e2e-gen": "./scripts/be.js http-client --work-dir test/fixtures/simple-proto-service --extra test/proto --output ./target/test-output",
