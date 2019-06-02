@@ -9,16 +9,20 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": ":",
+    "build": "tsc --declaration",
     "copy:proto": "mkdir -p test/proto/google/api && cp node_modules/@wix/well-known-protos/googleapis/google/api/http.proto test/proto/google/api/",
     "pretest": "npm run copy:proto",
-    "test": "mocha test lib/**/*.spec.js --reporter mocha-env-reporter",
+    "build:e2e-gen": "./scripts/be.js http-client --work-dir test/fixtures/simple-proto-service --extra test/proto --output ./target/test-output",
+    "test": "mocha -r ts-node/register test lib/**/*.spec.js --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "bin": {
     "be": "scripts/be.js"
   },
   "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.7",
+    "@types/node-fetch": "^2.3.4",
     "@wix/be-http-client": "^1.0.0",
     "@wix/be-server": "^1.0.6",
     "@wix/well-known-protos": "^1.0.1",
@@ -29,6 +33,8 @@
     "mocha-env-reporter": "^3.0.0",
     "node-eval": "^2.0.0",
     "node-fetch": "^2.6.0",
+    "ts-node": "^8.2.0",
+    "typescript": "^3.5.1",
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {

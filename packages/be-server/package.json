@@ -9,7 +9,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": ":",
+    "build": "tsc --declaration",
     "test": "mocha test lib/**/*.spec.js --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
@@ -19,6 +19,7 @@
     "mocha-env-reporter": "^3.0.0",
     "node-fetch": "^2.6.0",
     "protobufjs": "^6.8.8",
+    "typescript": "^3.5.1",
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {
