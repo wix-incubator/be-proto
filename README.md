@@ -17,7 +17,7 @@ Add a proto file to your NPM package or one that you depend upon.
 
 
 hello.proto
-```
+```proto
 syntax = "proto3";
 
 package hello;
