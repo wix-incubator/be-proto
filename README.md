@@ -97,8 +97,6 @@ console.log(message); // prints "Hello!"
 
 Install: `npm install --dev @wix/be-http-client`
 
-Check code examples for defining client and server without using protofiles:
-
 ```javascript
 
   const {http, get, messageBuilder, string} = require('@wix/be-http-client');
