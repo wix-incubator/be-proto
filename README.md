@@ -39,6 +39,8 @@ message Message {
 
 ### Code generation
 
+Install: `npm install --dev @wix/be-codegen`
+
 Add to `package.json`
 
 ```json
@@ -49,7 +51,11 @@ Add to `package.json`
 }
 ```
 
+Run: `npm run build`
+
 ### Use the generated code
+
+Install: `npm install --dev @wix/be-http-client`
 
 ```javascript
 
@@ -66,8 +72,8 @@ console.log(message); // prints "Hello!"
 
 ```javascript
 
+const {Greet, greet} = require('be-client/hello/HelloService.Greet';
 
-const {Greet, greet} = require('be-client/hello/HelloService.Greet');
 const beServer = require('@wix/be-server');
 
 const server = await beServer.builder()
@@ -85,4 +91,14 @@ const {message} = await greet({
 });
 
 console.log(message); // prints "Hello!"
+```
+
+### Proto-less
+
+Install: `npm install --dev @wix/be-http-client`
+
+Check code examples for defining client and server without using protofiles:
+
+```
+https://github.com/wix-incubator/be-proto/blob/master/packages/be-http-client/test/http-client.e2e.js#L12
 ```
