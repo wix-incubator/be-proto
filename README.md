@@ -5,10 +5,11 @@
 Library and code generator for Protobuf HTTP binding ([google/api/http.proto](https://github.com/googleapis/googleapis/blob/master/google/api/http.proto)), or some [docs](https://cloud.google.com/endpoints/docs/grpc/transcoding).
 
 
-## Hello World
+## Hello World Project set-up
 
 Add a proto file to your NPM package or one that you depend upon.
 
+File structure:
 ```
 - proto
   - hello-service.proto
@@ -16,7 +17,7 @@ Add a proto file to your NPM package or one that you depend upon.
 ```
 
 
-hello.proto
+proto/hello-service.proto
 ```proto
 syntax = "proto3";
 
