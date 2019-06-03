@@ -100,7 +100,7 @@ Install: `npm install --dev @wix/be-http-client`
 ```javascript
 
   const {http, get, messageBuilder, string} = require('@wix/be-http-client');
-  const {beServer} = require('@wix/be-server');
+  const beServer = require('@wix/be-server');
 
   const echoMessage = messageBuilder()
     .field('message', string, 1)
