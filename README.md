@@ -1,6 +1,6 @@
 # Bè Proto
 
-### <span style="color:red">Very alpha and very WIP.</span>
+### **WARNING**: <span style="color:red">Very alpha and very WIP.</span>
 
 Library and code generator for Protobuf HTTP binding ([google/api/http.proto](https://github.com/googleapis/googleapis/blob/master/google/api/http.proto)), or some [docs](https://cloud.google.com/endpoints/docs/grpc/transcoding).
 
