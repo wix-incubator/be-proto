@@ -99,6 +99,29 @@ Install: `npm install --dev @wix/be-http-client`
 
 Check code examples for defining client and server without using protofiles:
 
-```
-https://github.com/wix-incubator/be-proto/blob/master/packages/be-http-client/test/http-client.e2e.js#L12
+```javascript
+
+  const {http, get, messageBuilder, string} = require('@wix/be-http-client');
+
+  const echoMessage = messageBuilder()
+    .field('message', string, 1)
+    .build();
+
+  const getEcho = http(get('/echo'), echoMessage, echoMessage, {
+    fetch, // optionally provide your own fetch
+    baseUrl: 'http://localhost:9901'
+  });
+
+  const server = await beServer.builder()
+    .withBindings([{
+      binding: getEcho,
+      invoke: (message) => message
+    }])
+    .start({ port: 9901 });
+
+  const {message} = await getEcho.invoke({
+    message: 'Hello!'
+  }, {
+    baseUrl: 'http://localhost:9901'
+  });
 ```
