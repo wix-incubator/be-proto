@@ -59,7 +59,7 @@ Install: `npm install --dev @wix/be-http-client`
 
 ```javascript
 
-const {greet} = require('be-client/hello/HelloService.Greet');
+const {greet} = require('./be-client/hello/HelloService.Greet');
 
 const {message} = await greet({
   message: 'Hello!'
@@ -72,7 +72,7 @@ console.log(message); // prints "Hello!"
 
 ```javascript
 
-const {Greet, greet} = require('be-client/hello/HelloService.Greet';
+const {Greet, greet} = require('./be-client/hello/HelloService.Greet';
 
 const beServer = require('@wix/be-server');
 
