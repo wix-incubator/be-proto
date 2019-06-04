@@ -23,6 +23,10 @@ function httpClientGen(context) {
               js: {
                 imports: desc.js.imports,
                 code: desc.js.code
+              },
+              ts: {
+                imports: desc.ts.imports,
+                code: desc.ts.code
               }
             });
           });
@@ -54,32 +58,38 @@ async function formatDescriptors(context, types) {
   const numTypesToExport = typeNamesToExport.length;
 
   if (numTypesToExport > 0) {
-    const code = formatMessagesCode(messageDescriptors);
-    const imports = await mapImports(context, messageDescriptors);
-
     const name = numTypesToExport > 1 ? `agg_${typeNamesToExport.join('_')}` : typeNamesToExport[0];
+
+    const {jsCode, tsCode} = formatMessagesCode(messageDescriptors);
 
     descriptors = descriptors.concat([{
       namespace: messageDescriptors.namespace,
       name,
       js: {
-        code,
-        imports
+        code: jsCode,
+        imports: await mapImports(context, messageDescriptors.js.refs)
+      },
+      ts: {
+        code: tsCode,
+        imports: await mapImports(context, messageDescriptors.ts.refs)
       }
     }]);
   }
 
   descriptors = descriptors.concat(await Promise.all(methods.map(async(method) => {
     const methodDesc = generateMethod(method);
-    const code = formatMethodCode(methodDesc);
-    const imports = await mapImports(context, methodDesc);
+    const {jsCode, tsCode} = formatMethodCode(methodDesc);
 
     return {
       namespace: methodDesc.namespace,
       name: methodDesc.name,
       js: {
-        code,
-        imports
+        code: jsCode,
+        imports: await mapImports(context, methodDesc.js.refs)
+      },
+      ts: {
+        code: tsCode,
+        imports: await mapImports(context, methodDesc.ts.refs)
       }
     }
   })));
@@ -88,37 +98,56 @@ async function formatDescriptors(context, types) {
 }
 
 function formatMessagesCode(messageDescriptors) {
-  return `
-    ${Object.keys(messageDescriptors.exports)
-      .map((typeName) => formatMessageCode(typeName, messageDescriptors.exports[typeName]))
-      .join(';\r\n')}
+  const typesToExport = Object.keys(messageDescriptors.exports).length;
 
-  module.exports = {
-    ${Object.keys(messageDescriptors.exports)
-      .map((typeName) => `${typeName}`)
-      .join(',\r\n')}
+  return {
+    jsCode: typesToExport > 1 ? `
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => `const ${typeName} = ${formatMessageCode(messageDescriptors.exports[typeName])}`)
+        .join(';\r\n')}
+
+    module.exports = {
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => `${typeName}`)
+        .join(',\r\n')}
+    };
+    ` : `module.exports = {
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => `${typeName}: ${formatMessageCode(messageDescriptors.exports[typeName])}`)
+        .join(',\r\n')}
+    };`,
+    tsCode: `
+      ${Object.keys(messageDescriptors.exports)
+        .map((typeName) => messageDescriptors.exports[typeName].ts.code)
+        .join(';\r\n')}
+    `
   };
-  `;
 }
 
-function formatMessageCode(typeName, messageDesc) {
-  return `const ${typeName} = ${messageDesc.js.code}.build();`
+function formatMessageCode(messageDesc) {
+  return messageDesc.js.code;
 }
 
 function formatMethodCode(methodDesc) {
-  return `
-  const ${methodDesc.methodName} =  ${methodDesc.js.code};
+  const binding = methodDesc.exports.binding;
+  const invoke = methodDesc.exports.invoke;
 
-  module.exports = {
-    ${methodDesc.methodName}(message, options) {
-      return ${methodDesc.methodName}.invoke(message, options);
-    }
-  };`
+  return {
+    jsCode: `
+      const ${methodDesc.methodName} =  ${binding.js.code};
+
+      module.exports = {
+        ${methodDesc.methodName},
+        ${invoke.js.code}
+      };`,
+    tsCode: `
+      export ${binding.ts.code};
+      export ${invoke.ts.code};
+    `
+  };
 }
 
-function mapImports(context, desc) {
-  const refs = desc.js.refs || {};
-
+function mapImports(context, refs) {
   return Promise.all(Object.keys(refs).map((name) => mapImport(context, name, refs[name])));
 }
 

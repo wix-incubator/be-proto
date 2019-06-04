@@ -9,16 +9,23 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": ":",
+    "build": "npm run build:e2e-gen && tsc --declaration",
     "copy:proto": "mkdir -p test/proto/google/api && cp node_modules/@wix/well-known-protos/googleapis/google/api/http.proto test/proto/google/api/",
     "pretest": "npm run copy:proto",
-    "test": "mocha test lib/**/*.spec.js --reporter mocha-env-reporter",
+    "build:e2e-gen": "DEBUG=be* node ./scripts/be.js http-client --work-dir test/fixtures/simple-proto-service --extra test/proto --output ./target/test-output/simple-proto-service test.MessageService",
+    "unit": "mocha lib/**/*.spec.js --reporter mocha-env-reporter",
+    "it": "mocha test --reporter mocha-env-reporter",
+    "it:ts": "mocha -r ts-node/register test/**/*.ts --reporter mocha-env-reporter",
+    "test": "npm run unit && npm run it && npm run it:ts",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "bin": {
     "be": "scripts/be.js"
   },
   "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.7",
+    "@types/node-fetch": "^2.3.4",
     "@wix/be-http-client": "^1.0.0",
     "@wix/be-server": "^1.0.6",
     "@wix/well-known-protos": "^1.0.1",
@@ -29,10 +36,14 @@
     "mocha-env-reporter": "^3.0.0",
     "node-eval": "^2.0.0",
     "node-fetch": "^2.6.0",
+    "ts-node": "^8.2.0",
+    "tslib": "^1.9.3",
+    "typescript": "^3.5.1",
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {
     "@wix/proto-packages": "^1.0.18",
+    "debug": "^4.1.1",
     "fs-extra": "^8.0.1",
     "protobufjs": "^6.8.8"
   }

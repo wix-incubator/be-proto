@@ -1,9 +1,9 @@
-const {generateMessageUnit, generateEnum, generateTypes} = require('./message-generator');
+const {generateMessageUnit, generateEnum, generateType, generateTypes} = require('./message-generator');
 const protobuf = require('protobufjs');
 const {expect} = require('chai');
 const _ = require('lodash');
 
-describe('message-generator', () => {
+describe.only('message-generator', () => {
 
   it('should generate a message', () => {
     const givenProto = protobuf.parse(`
@@ -19,11 +19,16 @@ describe('message-generator', () => {
 
     const generatedMessage = generateMessageUnit(givenProto.root.nested.a.nested.test.TestMessage);
 
-    expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.namespace).to.equal('a.test');
     expect(generatedMessage.name).to.equal('TestMessage');
+
+    expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.js.code).to.include(`.field('testValue', string, 1)`);
     expect(generatedMessage.js.code).to.include(`.repeated('testValues', int64, 2)`);
+    
+    expect(generatedMessage.ts.code).to.include(`abstract class TestMessage extends be.Message`);
+    expect(generatedMessage.ts.code).to.include(`testValue: string`);
+    expect(generatedMessage.ts.code).to.include(`testValues: int64[]`);
 
     expect(_.sortBy(Object.keys(generatedMessage.js.refs))).to.deep.equal(['int64', 'messageBuilder', 'string']);
     expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
@@ -107,6 +112,32 @@ describe('message-generator', () => {
     expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
       id: 'messageBuilder',
       source: null
+    });
+  });
+
+  it('should re-export a well-known-type', () => {
+    const givenProto = protobuf.parse(`
+      syntax = "proto3";
+
+      package google.protobuf;
+
+      message StringValue {        
+      }
+    `);
+
+    const generatedMessage = generateType(givenProto.root.nested.google.nested.protobuf.StringValue);
+
+    expect(generatedMessage.js.refs).to.deep.equal({
+      StringValue: {
+        id: 'StringValue',
+        source: null
+      }
+    });
+    expect(generatedMessage.ts.refs).to.deep.equal({
+      StringValue: {
+        id: 'StringValue',
+        source: null
+      }
     });
   });
 

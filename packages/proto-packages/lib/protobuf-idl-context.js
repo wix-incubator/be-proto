@@ -6,6 +6,7 @@ const _ = require('lodash');
 const fs = require('fs-extra');
 const {resolveNamespace} = require('./type-utils');
 const {createTypesContext} = require('./types-context');
+const debug = require('debug')('be-protobuf-idl-context');
 
 function create(options) {
 
@@ -42,7 +43,11 @@ function create(options) {
   }
 
   async function resolveRoot() {
+    debug('Resolving root', contextDir, sourceRoots, packagesDirName, extraPackages);
+
     const {roots, packageFiles} = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
+
+    debug(`Resolved ${Object.keys(roots).length} roots and ${packageFiles.length} package files`);
 
     return new ResolutionRoot({
       origin: contextDir,
@@ -55,12 +60,16 @@ function create(options) {
 async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages = []) {
   const result = await klaw(contextDir, { preserveSymlinks: true });
 
+  debug(`Finished traverse`);
+
+  extraPackages = extraPackages.map((packagePath) => path.resolve(packagePath));
+
   const protoFiles = [];
   const packageFiles = [];
   const packageDirs = extraPackages.slice();
   const links = [];
 
-  await collectProtofilesTo(extraPackages, protoFiles);
+  await collectProtofilesTo(packageDirs, protoFiles);
 
   const currentDir = path.resolve(contextDir);
 
@@ -77,13 +86,19 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
     }
   });
 
+  debug(`Found ${links.length} symlinks, resolving`);
+
   const resolvingFromLinks = Promise.all(links.map(async(link) => resolveProtoRoots(await fs.realpath(link), sourceRoots, packagesDirName)));
 
   const ts = new TrieSearch('path', {splitOnRegEx: /\\/});
 
   ts.addAll(protoFiles);
 
+  debug(`Resolving proto directories`);
+
   const existingRoots = (await resolveProtoDirs(packageDirs, sourceRoots)).concat(extraPackages);
+
+  debug(`Finished resolving proto directories`);
 
   const roots = {};
 
@@ -95,6 +110,8 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
   });
 
   const fromLinks = await resolvingFromLinks;
+
+  debug(`Finished resolving symlinks`);
 
   fromLinks.forEach((rootsFromLinks) => {
     for (let root in rootsFromLinks.roots) {

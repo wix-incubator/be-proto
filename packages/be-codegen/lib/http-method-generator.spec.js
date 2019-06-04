@@ -33,7 +33,7 @@ describe('http-method-generator', () => {
 
     expect(generatedMethod.namespace).to.equal('test');
     expect(generatedMethod.name).to.equal('TestService.Get');
-    expect(generatedMethod.js.code).to.include(`http(get('/api/v1/test'), TestRequest, TestResponse)`);
+    expect(generatedMethod.exports.binding.js.code).to.include(`http(get('/api/v1/test'), TestRequest, TestResponse)`);
   });
 
   it('should generate an HTTP streaming method', () => {
@@ -61,6 +61,6 @@ describe('http-method-generator', () => {
 
     const generatedMethod = generateMethod(givenProto.root.TestService.methods.Stream);
 
-    expect(generatedMethod.js.code).to.include(`http(get('/api/v1/test'), stream(TestRequest), stream(TestResponse))`);
+    expect(generatedMethod.exports.binding.js.code).to.include(`http(get('/api/v1/test'), stream(TestRequest), stream(TestResponse))`);
   });
 });

@@ -2,12 +2,23 @@ const {httpBinding} = require('@wix/be-http-binding');
 const fetchInvoker = require('./fetch-invoker');
 
 module.exports = function httpClientBinding(binding, request, response, options = {}) {
-  const bindingOptions = {
-    ...options,
-    invoker: resolveInvoker(options)
-  };
+  const original = httpBinding.http(binding, request, response, options);
 
-  return httpBinding.http(binding, request, response, bindingOptions);
+  return {
+    // FIXME options will not be merged
+    invoke(msg, options) {
+      const invocationOptions = {
+        ...options,
+        invoker: resolveInvoker(options)
+      };
+
+      return original.invoke(msg, invocationOptions);
+    },
+    httpRoutes() {
+      return original.httpRoutes();
+    },
+    createInvoke: original.createInvoke
+  };
 }
 
 function resolveInvoker(options) {
