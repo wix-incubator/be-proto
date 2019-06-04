@@ -1,5 +1,6 @@
 const {generateTypes} = require('./message-generator');
 const {generateMethod} = require('./http-method-generator');
+const {getImport} = require('@wix/be-http-client/codegen');
 const _ = require('lodash');
 
 function httpClientGen(context) {
@@ -152,13 +153,16 @@ function mapImports(context, refs) {
 }
 
 async function mapImport(context, name, ref) {
-  if (ref.source && !builtinTypes[name]) {
+  const targetImport = getImport(ref, name);
+
+  if (targetImport) {
+    return targetImport;
+  }
+
+  if (ref.source) {
     return mapLocalImport(await context.resolve(ref.source, ref.id));
   } else {
-    return {
-      name,
-      packageName: '@wix/be-http-client'
-    };
+    throw new Error(`Cannot resolve reference ${ref.id}`);
   }
 }
 
@@ -185,23 +189,5 @@ function mapLocalImport({namespace, name, exports}) {
 function formatTypeName(descriptor) {
   return descriptor.namespace ? `${descriptor.namespace}.${descriptor.name}` : descriptor.name;
 }
-
-const builtinTypes = {
-  double: {},
-  float: {},
-  int32: {},
-  int64: {},
-  uint32: {},
-  uint64: {},
-  sint32: {},
-  sint64: {},
-  fixed32: {},
-  fixed64: {},
-  sfixed32: {},
-  sfixed64: {},
-  bool: {},
-  string: {},
-  bytes: {}
-};
 
 module.exports = {httpClientGen, mapImport, mapLocalImport};

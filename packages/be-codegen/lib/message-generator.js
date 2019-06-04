@@ -1,11 +1,6 @@
 const {typeUtils} = require('@wix/proto-packages');
 const codeReferences = require('./code-references');
-
-const wellKnownTypes = {
-  'google.protobuf.StringValue': {
-    name: 'StringValue'
-  }
-};
+const {typeSource} = require('@wix/be-http-client/codegen');
 
 module.exports = {
   generateMessageUnit,
@@ -40,10 +35,10 @@ function generateTypes(types) {
 }
 
 function generateType(messageOrEnumType, refs = codeReferences([messageOrEnumType])) {
-  const fqn = typeUtils.resolveFullyQualifiedName(messageOrEnumType);
+  const managedType = typeSource(messageOrEnumType);
 
-  if (wellKnownTypes[fqn]) {
-    return generateReexport(messageOrEnumType, wellKnownTypes[fqn], refs);
+  if (managedType) {
+    return generateReexport(messageOrEnumType, managedType, refs);
   } else if (messageOrEnumType.fields) {
     return generateMessageUnit(messageOrEnumType, refs);
   } else if (messageOrEnumType.values) {
