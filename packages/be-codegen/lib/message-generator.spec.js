@@ -3,7 +3,7 @@ const protobuf = require('protobufjs');
 const {expect} = require('chai');
 const _ = require('lodash');
 
-describe.only('message-generator', () => {
+describe('message-generator', () => {
 
   it('should generate a message', () => {
     const givenProto = protobuf.parse(`
@@ -25,7 +25,7 @@ describe.only('message-generator', () => {
     expect(generatedMessage.js.code).to.include(`messageBuilder`);
     expect(generatedMessage.js.code).to.include(`.field('testValue', string, 1)`);
     expect(generatedMessage.js.code).to.include(`.repeated('testValues', int64, 2)`);
-    
+
     expect(generatedMessage.ts.code).to.include(`abstract class TestMessage extends be.Message`);
     expect(generatedMessage.ts.code).to.include(`testValue: string`);
     expect(generatedMessage.ts.code).to.include(`testValues: int64[]`);
@@ -33,6 +33,7 @@ describe.only('message-generator', () => {
     expect(_.sortBy(Object.keys(generatedMessage.js.refs))).to.deep.equal(['int64', 'messageBuilder', 'string']);
     expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
       id: 'messageBuilder',
+      name: 'messageBuilder',
       source: null
     });
   });
@@ -76,10 +77,12 @@ describe.only('message-generator', () => {
 
     expect(generatedMessage.js.refs.TestMessage2).to.deep.equal({
       id: 'TestMessage2',
+      name: 'TestMessage2',
       source: givenProto.root.TestMessage
     });
     expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
       id: 'messageBuilder',
+      name: 'messageBuilder',
       source: null
     });
   });
@@ -111,6 +114,7 @@ describe.only('message-generator', () => {
     });
     expect(generatedMessage.js.refs.messageBuilder).to.deep.equal({
       id: 'messageBuilder',
+      name: 'messageBuilder',
       source: null
     });
   });
@@ -121,7 +125,7 @@ describe.only('message-generator', () => {
 
       package google.protobuf;
 
-      message StringValue {        
+      message StringValue {
       }
     `);
 
@@ -130,12 +134,14 @@ describe.only('message-generator', () => {
     expect(generatedMessage.js.refs).to.deep.equal({
       StringValue: {
         id: 'StringValue',
+        name: 'StringValue',
         source: null
       }
     });
     expect(generatedMessage.ts.refs).to.deep.equal({
       StringValue: {
         id: 'StringValue',
+        name: 'StringValue',
         source: null
       }
     });
@@ -183,6 +189,7 @@ describe.only('message-generator', () => {
     expect(generatedMessage.nested.TestEnum.js.code).to.include(`EnumBuilder`);
     expect(generatedMessage.js.refs.TestNestedMessage).to.deep.equal({
       id: 'TestNestedMessage',
+      name: 'TestNestedMessage',
       source: givenProto.root.nested.TestMessage
     });
     expect(generatedMessage.js.refs.TestEnum).to.exist;

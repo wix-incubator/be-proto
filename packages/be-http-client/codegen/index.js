@@ -1,29 +1,10 @@
 const {typeUtils} = require('@wix/proto-packages');
+const moduleExports = require('..');
 
 const wellKnownTypes = {
   'google.protobuf.StringValue': {
     name: 'StringValue'
   }
-};
-
-const moduleExports = {
-  double: {},
-  float: {},
-  int32: {},
-  int64: {},
-  uint32: {},
-  uint64: {},
-  sint32: {},
-  sint64: {},
-  fixed32: {},
-  fixed64: {},
-  sfixed32: {},
-  sfixed64: {},
-  bool: {},
-  string: {},
-  bytes: {},
-  messageBuilder: {},
-  be: {},
 };
 
 module.exports = {
@@ -40,9 +21,17 @@ function typeSource(messageOrEnumType) {
 }
 
 function getImport(ref, name) {
+  if (ref.id && ref.id.startsWith('be')) {
+    return {
+      name: ref.name,
+      namespace: 'be',
+      packageName: '@wix/be-http-client'
+    };
+  }
+
   if (moduleExports[name]) {
     return {
-      name,
+      name: ref.name,
       packageName: '@wix/be-http-client'
     };
   };

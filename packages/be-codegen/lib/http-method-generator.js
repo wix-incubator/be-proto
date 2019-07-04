@@ -21,7 +21,7 @@ function generateMethod(serviceMethod) {
 
   const methodNameSmall = toSmallCap(serviceMethod.name);
 
-  const tsInvocationCode = `function ${methodNameSmall}(request: ${formatTsArgument(tsRequestType, serviceMethod.requestStream, refs)}, options?: ${refs.tsReference('CallOptions')}): ` +
+  const tsInvocationCode = `function ${methodNameSmall}(request: ${formatTsArgument(tsRequestType, serviceMethod.requestStream, refs)}, options?: ${refs.tsReference('be.CallOptions')}): ` +
     `${formatTsArgument(tsResponseType, serviceMethod.responseStream, refs, true)}`;
 
   return {
@@ -35,7 +35,7 @@ function generateMethod(serviceMethod) {
           code: bindingJsCode
         },
         ts: {
-          code: `const ${serviceMethod.name}: ${refs.tsReference('HttpBinding')}`
+          code: `const ${serviceMethod.name}: ${refs.tsReference('be.HttpBinding')}`
         }
       },
       invoke: {

@@ -54,7 +54,7 @@ async function runHttpClientGen(rawArgs) {
 
   try {
     await output.done();
-    
+
     debug('Output processed');
   } catch(e) {
     cons.log('ERROR:', e);
@@ -75,7 +75,7 @@ function createContext(args) {
   const options = {
     contextDir: workDir,
     sourceRoots,
-    extraPackages: extra ? [extra] : []
+    extraPackages: extra ? (Array.isArray(extra) ? extra : [extra]) : []
   };
 
   debug('Creating context', options);

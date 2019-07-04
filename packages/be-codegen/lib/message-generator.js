@@ -50,7 +50,7 @@ function generateMessageUnit(messageType, refs = codeReferences([messageType])) 
   const {jsFields, tsFields} = formatMessageFields(messageType, refs);
 
   const jsCode = `${refs.jsReference('messageBuilder')}()\r\n${jsFields}.build()`;
-  const tsCode = `abstract class ${messageType.name} extends ${refs.tsReference('be')}.Message\r\n { ${tsFields}\r\n }`;
+  const tsCode = `abstract class ${messageType.name} extends ${refs.tsReference('be.Message')}\r\n { ${tsFields}\r\n }`;
 
   return {
     name: messageType.name,

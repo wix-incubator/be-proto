@@ -2,11 +2,14 @@ const {generateTypes} = require('./message-generator');
 const {generateMethod} = require('./http-method-generator');
 const {getImport} = require('@wix/be-http-client/codegen');
 const _ = require('lodash');
+const debug = require('debug')('be-http-client-gen');
 
 function httpClientGen(context) {
   return {
     async generate(typeNames, output) {
       try {
+        debug('Loaded protofiles', await context.files());
+
         const {resolveCycleGroups} = await context.queryTypesFor(typeNames);
         const exportedTypes = [];
 

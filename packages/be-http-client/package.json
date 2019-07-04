@@ -10,7 +10,7 @@
   "private": false,
   "scripts": {
     "build": ":",
-    "test": "mocha test --reporter mocha-env-reporter",
+    "test": "mocha test codegen --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "devDependencies": {

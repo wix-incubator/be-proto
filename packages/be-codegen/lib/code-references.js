@@ -7,11 +7,11 @@ module.exports = function codeReferences(localTypes = []) {
   const localTypesFqn = localTypes.map((type) => typeUtils.resolveFullyQualifiedName(type));
 
   return {
-    jsReference(id, source = null) {      
+    jsReference(id, source = null) {
       return ifNotLocal(id, source, () => reference(id, source, jsRefs), id);
     },
     tsReference(id, source = null) {
-      return ifNotLocal(id, source, () => reference(id, source, tsRefs), id);
+      return ifNotLocal(id, source, () => fqnReference(id, source, tsRefs), id);
     },
     get jsRefs() {
       return jsRefs;
@@ -46,7 +46,19 @@ function reference(id, source, refs) {
 
   if (id.indexOf('.') >= 0) {
     refs[id].name = id.substr(id.lastIndexOf('.') + 1);
+  } else {
+    refs[id].name = id;
   }
 
   return refs[id].name || refs[id].id;
 };
+
+function fqnReference(id, source, refs) {
+  refs[id] = {
+    id,
+    name: id,
+    source
+  };
+
+  return id;
+}
