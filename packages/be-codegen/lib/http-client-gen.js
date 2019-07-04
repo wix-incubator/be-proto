@@ -163,13 +163,13 @@ async function mapImport(context, name, ref) {
   }
 
   if (ref.source) {
-    return mapLocalImport(await context.resolve(ref.source, ref.id));
+    return mapLocalImport(ref.name, await context.resolve(ref.source, ref.id));
   } else {
     throw new Error(`Cannot resolve reference ${ref.id}`);
   }
 }
 
-function mapLocalImport({namespace, name, exports}) {
+function mapLocalImport(name, {namespace, exports}) {
   if (exports) {
     const exportedBy = Object.keys(exports)[0];
 

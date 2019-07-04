@@ -7,7 +7,7 @@ require('chai').use(require('chai-things'));
 
 describe('http-client-gen', () => {
 
-  it.only('should output a message with imports', async() => {
+  it('should output a message with imports', async() => {
     const givenContext = create({
       contextDir: path.join(__dirname, 'fixtures/simple-proto'),
       packagesDirName: 'deps',

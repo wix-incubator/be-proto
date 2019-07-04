@@ -3,7 +3,8 @@ const path = require('path');
 
 module.exports = {
   outputToFiles,
-  toRequireLines
+  toRequireLines,
+  toImportLines
 };
 
 function outputToFiles(outputDir, output = console) {
@@ -72,7 +73,7 @@ function fileContentsFor(code, contextPath, extension) {
     declare namespace ${code.namespace} {
       ${code.ts.code}
     }
-    
+
     export = ${code.namespace};`;
   } else if (extension === 'json') {
     return JSON.stringify(code.json);
@@ -80,15 +81,13 @@ function fileContentsFor(code, contextPath, extension) {
 }
 
 function toRequireLines(jsImports, contextPath) {
-  return jsImports.map(({name, namespace, packageName}) => packageName ?
-    `const {${name}} = require('${packageName}');` :
-    `const {${name}} = require('${packageNameFor(namespace, contextPath)}/${name}');`);
+  return sanitizeImports(jsImports, contextPath).map(({source, symbols}) =>
+    `const {${symbols.join(', ')}} = require('${source}');`);
 }
 
 function toImportLines(imports, contextPath) {
-  return imports.map(({name, namespace, packageName}) => packageName ?
-    `import {${name}} from '${packageName}';` :
-    `import {${name}} from '${packageNameFor(namespace, contextPath)}/${name}';`);
+  return sanitizeImports(imports, contextPath).map(({source, symbols}) =>
+    `import {${symbols.join(', ')}} from '${source}';`);
 }
 
 function packageNameFor(namespace, contextPath) {
@@ -100,3 +99,35 @@ function packageNameFor(namespace, contextPath) {
 
   return relativePath.startsWith('.') || relativePath.startsWith('/') ? relativePath : `./${relativePath}`;
 }
+
+function namespacePartOnly(name) {
+  const dotInName = name.indexOf('.');
+
+  if (dotInName > 0) {
+    return name.substring(0, dotInName);
+  }
+
+  return name;
+}
+
+function sanitizeImports(imports, contextPath) {
+  const sanitized = {};
+
+  imports.forEach(({name, namespace, packageName}) => {
+    const importFrom = packageName ? packageName : `${packageNameFor(namespace, contextPath)}/${name}`
+    const symbol = namespacePartOnly(name);
+
+    const importedSymbols = sanitized[importFrom] || [];
+
+    if (importedSymbols.indexOf(symbol) === -1) {
+      importedSymbols.push(symbol);
+    }
+
+    sanitized[importFrom] = importedSymbols;
+  });
+
+  return Object.keys(sanitized).map((importFrom) => ({
+    source: importFrom,
+    symbols: sanitized[importFrom]
+  }));
+};
