@@ -1,6 +1,6 @@
 const {http, get, post, put} = require('./http-binding');
 const {messageBuilder} = require('./message-builder');
-const {int32} = require('./well-known-types');
+const {int32} = require('./builtin-types');
 const {expect} = require('chai');
 const url = require('url');
 const querystring = require('querystring');
@@ -11,7 +11,7 @@ describe('http-binding', () => {
     .field('a', int32, 1)
     .field('b', int32, 2)
     .build();
-  
+
   let invoker;
 
   beforeEach(() => {
@@ -141,7 +141,7 @@ describe('http-binding', () => {
     let lastOptions;
 
     return {
-      invoke(request) {        
+      invoke(request) {
         invocations.push({
           method: request.method,
           uri: request.uri,

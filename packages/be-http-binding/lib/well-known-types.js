@@ -1,30 +1,21 @@
+const builtin = require('./builtin-types');
 
 module.exports = {
-  string: {
-    fromValue(value) {
-      return (value || '').toString();
-    }
-  },
-  int32: {
-    fromValue(value) {
-      if (!value) {
-        return 0;
-      }
-
-      if (typeof(value) === 'number') {
-        return Math.floor(value);
-      }
-
-      if (typeof(value) === 'string') {
-        return parseInt(value);
-      }
-
-      return 0 + value;
-    }
-  },
-  StringValue: {
-    fromValue(value) {
-      return value ? value.toString() : null;
-    }
-  }
+  StringValue: wrapperValue(builtin.string),
+  Int32Value: wrapperValue(builtin.int32),
+  DoubleValue: wrapperValue(builtin.double),
+  FloatValue: wrapperValue(builtin.float),
+  Int64Value: wrapperValue(builtin.int64),
+  UInt64Value: wrapperValue(builtin.uint64),
+  UInt32Value: wrapperValue(builtin.uint32),
+  BoolValue: wrapperValue(builtin.bool),
+  BytesValue: wrapperValue(builtin.bytes),
 };
+
+function wrapperValue(wrappedType) {
+  return {
+    fromValue(value) {
+      return value ? wrappedType.fromValue(value) : null;
+    }
+  };
+}

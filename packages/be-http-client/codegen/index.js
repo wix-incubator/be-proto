@@ -4,6 +4,9 @@ const moduleExports = require('..');
 const wellKnownTypes = {
   'google.protobuf.StringValue': {
     name: 'StringValue'
+  },
+  'google.protobuf.DoubleValue': {
+    name: 'DoubleValue'
   }
 };
 
@@ -21,7 +24,7 @@ function typeSource(messageOrEnumType) {
 }
 
 function getImport(ref, name) {
-  if (ref.id && ref.id.startsWith('be')) {
+  if (ref && ref.id && ref.id.startsWith('be')) {
     return {
       name: ref.name,
       namespace: 'be',
@@ -31,7 +34,7 @@ function getImport(ref, name) {
 
   if (moduleExports[name]) {
     return {
-      name: ref.name,
+      name: (ref || {}).name || name,
       packageName: '@wix/be-http-client'
     };
   };

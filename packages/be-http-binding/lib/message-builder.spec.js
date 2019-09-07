@@ -1,5 +1,5 @@
 const {messageBuilder} = require('./message-builder');
-const {string, int32} = require('./well-known-types');
+const {string, int32} = require('./builtin-types');
 const {expect} = require('chai');
 const _ = require('lodash');
 
