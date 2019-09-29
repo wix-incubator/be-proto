@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@wix/be-http-binding": "^1.0.7",
-    "@wix/proto-packages": "^1.0.22",
+    "@wix/proto-packages": "^1.0.113",
     "find-root": "^1.1.0",
     "url-pattern": "^1.0.3"
   }
