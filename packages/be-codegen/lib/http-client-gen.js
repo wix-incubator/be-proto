@@ -66,7 +66,7 @@ async function formatDescriptors(context, types) {
 
     const {jsCode, tsCode} = formatMessagesCode(messageDescriptors);
 
-    descriptors = descriptors.concat([{
+    descriptors.push({
       namespace: messageDescriptors.namespace,
       name,
       js: {
@@ -77,7 +77,32 @@ async function formatDescriptors(context, types) {
         code: tsCode,
         imports: await mapImports(context, messageDescriptors.ts.refs)
       }
-    }]);
+    });
+
+    if (numTypesToExport > 1) {
+      for (let i = 0; i < numTypesToExport; i++) {
+        const typeName = typeNamesToExport[i];
+
+        descriptors.push({
+          namespace: messageDescriptors.namespace,
+          name: typeName,
+          js: {
+            code: `module.exports.${typeName} = ${typeName}`,
+            imports: [{
+              name: typeName,
+              packageName: `./${name}`
+            }]
+          },
+          ts: {
+            code: `export ${typeName}`,
+            imports: [{
+              name: typeName,
+              packageName: `./${name}`
+            }]
+          }
+        });
+      }
+    }
   }
 
   descriptors = descriptors.concat(await Promise.all(methods.map(async(method) => {

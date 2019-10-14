@@ -37,6 +37,32 @@ describe('http-client-gen', () => {
     expect(output.entryFor('be-proto').json).to.have.property('@wix/be-http-client');
   });
 
+  it('should output a circular message', async() => {
+    const givenContext = create({
+      contextDir: path.join(__dirname, 'fixtures/complex-proto-messages'),
+      packagesDirName: 'deps',
+      extraPackages: [path.join(__dirname, 'proto')]
+    });
+
+    const clientGen = httpClientGen(givenContext);
+    const output = testOutput();
+
+    clientGen.generate(['test.CircularMessage'], output);
+
+    await output.done();
+
+    const entry = output.entryFor('test.agg_CircularMessage_NestedCircularMessage');
+
+    expect(entry.namespace).to.equal('test');
+
+    const proxyEntry = output.entryFor('test.CircularMessage');
+
+    expect(proxyEntry.js.imports).to.include.something.that.deep.equals({
+      name: 'CircularMessage',
+      packageName: './agg_CircularMessage_NestedCircularMessage'
+    });
+  });
+
   function testOutput() {
     let fulfillCallback, rejectCallback;
 

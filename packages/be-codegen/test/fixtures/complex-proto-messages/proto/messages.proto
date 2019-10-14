@@ -9,3 +9,11 @@ message Message {
     string message = 1;
   }
 }
+
+message CircularMessage {
+  NestedCircularMessage nested = 1;
+}
+
+message NestedCircularMessage {
+  CircularMessage message = 1;
+}
