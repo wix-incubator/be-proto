@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package level1;
+
+import "test-level2.proto";
+
+message Message {
+  level2.Message sublevel = 1;
+}

@@ -8,7 +8,7 @@ describe('Protobuf IDL context', function() {
 
   it('should load protobuf IDL', async() => {
     const givenContext = create({
-      contextDir: path.join(__dirname, 'fixtures/package-with-proto-in-deps'),
+    contextDir: path.join(__dirname, 'fixtures/package-with-proto-in-deps'),
       packagesDirName: 'deps'
     });
 
@@ -40,12 +40,21 @@ describe('Protobuf IDL context', function() {
     expect(types[2].name).to.equal('Message');
   });
 
+  it('should lookup with transitive deps', async() => {
+    const givenContext = aContext('transitive-deps');
+
+    const typesContext = await givenContext.queryTypesFor(['level0.Message']);
+
+    expect(typesContext.types).to.have.length(4);
+  });
+
   it('should lookup service types', async() => {
     const givenContext = aContext('package-with-proto-dependency');
 
     const typesContext = await givenContext.queryTypesFor(['test.TestService']);
     const types = typesContext.types;
 
+    expect(types).to.have.length(6);
     expect(types[0].name).to.equal('TestService');
     expect(types[1].name).to.equal('NestedMessage');
     expect(types[2].name).to.equal('OtherMessage');
@@ -78,7 +87,7 @@ describe('Protobuf IDL context', function() {
     });
   });
 
-  it('should find exports', async() => {
+  it('should find type exports', async() => {
     const givenContext = aContext('package-with-proto-exports');
 
     const type = await givenContext.lookupType('test.NestedMessage');

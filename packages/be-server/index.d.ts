@@ -1,5 +1,3 @@
-import { start } from "repl";
-
 export function builder(): ServerBuilder;
 
 export function fromProtoModules(contextOptions: object, bindings: object): BindingsSource;

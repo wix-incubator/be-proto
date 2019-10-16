@@ -3,6 +3,7 @@ import {expect} from 'chai';
 import * as beServer from '@wix/be-server';
 import {Get, get} from '../target/test-output/simple-proto-service/test/MessageService.Get';
 import {Message} from '../target/test-output/simple-proto-service/test/Message';
+import 'mocha';
 
 describe('http-client-gen', function() {
 

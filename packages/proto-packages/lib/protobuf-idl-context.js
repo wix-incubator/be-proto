@@ -7,6 +7,7 @@ const fs = require('fs-extra');
 const {resolveNamespace} = require('./type-utils');
 const {createTypesContext} = require('./types-context');
 const debug = require('debug')('be-protobuf-idl-context');
+const glob = require('glob-promise');
 
 function create(options) {
 
@@ -45,106 +46,40 @@ function create(options) {
   async function resolveRoot() {
     debug('Resolving root', contextDir, sourceRoots, packagesDirName, extraPackages);
 
-    const {roots, packageFiles} = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
+    const protoFiles = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
 
-    debug(`Resolved ${Object.keys(roots).length} roots and ${packageFiles.length} package files`);
+    debug(`Resolved ${protoFiles.packages.length} packages and ${protoFiles.topLevelFiles.length} top level files files`);
 
     return new ResolutionRoot({
       origin: contextDir,
-      roots,
-      packageFilesAnalyzing: analyzePackageFiles(packageFiles)
+      protoFiles,
+      packageFilesAnalyzing: analyzePackageFiles(protoFiles.packages)
     });
   }
 }
 
 async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages = []) {
-  const result = await klaw(contextDir, { preserveSymlinks: true });
+  const packages = new NpmPackages(sourceRoots, packagesDirName);
+  const mainPackage = await packages.loadAt(contextDir);
 
-  debug(`Finished traverse`);
+  const depsSourceRoots = await mainPackage.collectAllSourceRoots();
 
-  extraPackages = extraPackages.map((packagePath) => path.resolve(packagePath));
+  const extraPackagesFullPath = extraPackages.map((extraPath) => path.resolve(extraPath));
 
-  const protoFiles = [];
-  const packageFiles = [];
-  const packageDirs = extraPackages.slice();
-  const links = [];
-
-  await collectProtofilesTo(packageDirs, protoFiles);
-
-  const currentDir = path.resolve(contextDir);
-
-  result.forEach(node => {
-    if (node.stats.isSymbolicLink() && node.path !== currentDir) {
-      links.push(node.path);
-    } else if (node.path.toLowerCase().endsWith('.proto')) {
-      protoFiles.push({
-        path: node.path
-      });
-    } else if (path.basename(node.path) === 'package.json') {
-      packageFiles.push(node.path);
-      packageDirs.push(path.dirname(node.path));
-    }
+  extraPackagesFullPath.forEach((extraPackagePath) => {
+    depsSourceRoots.set(extraPackagePath, new SourceRoot(null, extraPackagePath));
   });
 
-  debug(`Found ${links.length} symlinks, resolving`);
-
-  const resolvingFromLinks = Promise.all(links.map(async(link) => resolveProtoRoots(await fs.realpath(link), sourceRoots, packagesDirName)));
-
-  const ts = new TrieSearch('path', {splitOnRegEx: /\\/});
-
-  ts.addAll(protoFiles);
-
-  debug(`Resolving proto directories`);
-
-  const existingRoots = (await resolveProtoDirs(packageDirs, sourceRoots)).concat(extraPackages);
-
-  debug(`Finished resolving proto directories`);
-
-  const roots = {};
-
-  roots[contextDir] = _.filter(ts.get(contextDir).map((entry) => path.relative(contextDir, entry.path)), entry =>
-    !belongsTo(entry, [packagesDirName]) && belongsTo(entry, sourceRoots));
-
-  existingRoots.forEach(root => {
-    roots[root] = ts.get(root).map((entry) => path.relative(root, entry.path));
-  });
-
-  const fromLinks = await resolvingFromLinks;
-
-  debug(`Finished resolving symlinks`);
-
-  fromLinks.forEach((rootsFromLinks) => {
-    for (let root in rootsFromLinks.roots) {
-      roots[root] = rootsFromLinks.roots[root];
-    }
-
-    rootsFromLinks.packageFiles.forEach((packageFile) => packageFiles.push(packageFile));
-  });
-
-  return {roots, packageFiles};
+  return ProtoFiles.from(mainPackage, depsSourceRoots, extraPackagesFullPath);
 }
 
-async function collectProtofilesTo(dirs, protoFiles) {
-  await Promise.all(dirs.map(async(dir) => {
-    const result = await klaw(dir, { preserveSymlinks: false });
-
-    result.forEach(fs => {
-      if (fs.path.toLowerCase().endsWith('.proto')) {
-        protoFiles.push({
-          path: fs.path
-        });
-      }
-    });
-  }));
-}
-
-async function analyzePackageFiles(packageFiles) {
+async function analyzePackageFiles(packageSet) {
   const beProtoPackages = {};
 
-  await Promise.all(packageFiles.map(async(packageFile) => {
-    const pkg = JSON.parse(await fs.readFile(packageFile));
+  await Promise.all(Array.from(packageSet).map(async(npmPackage) => {
+    const pkg = npmPackage.packageJson;
+    const packageDir = npmPackage.path;
     const beProtoMeta = pkg['@wix/be-proto'];
-    const packageDir = path.dirname(packageFile);
 
     if (beProtoMeta) {
       const beProtoDirs = Array.isArray(beProtoMeta.exports) ? beProtoMeta.exports : [beProtoMeta.exports];
@@ -167,45 +102,24 @@ async function analyzePackageFiles(packageFiles) {
   return beProtoPackages;
 }
 
-async function resolveProtoDirs(packageDirs, sourceRoots) {
-  const protoRoots = _.flatMap(packageDirs, (dir) => sourceRoots.map(rootPath => path.resolve(dir, rootPath)));
-
-  return (await Promise.all(protoRoots.map(root => fs.exists(root).then(exists => [root, exists]))))
-    .filter(([_, exists]) => exists).map(([path, _]) => path);
-}
-
-function belongsTo(filepath, roots) {
-  return _.find(roots, root => filepath.startsWith(root)) !== undefined;
-}
-
 class ResolutionRoot extends pbjs.Root {
-
   constructor(opts) {
     super(opts);
 
-    const targets = {};
-
-    for (let root in opts.roots) {
-      opts.roots[root].forEach(target => {
-        if (targets[target]) {
-          return;
-        }
-
-        targets[target] = path.resolve(root, target);
-      });
-    }
-
-    this._roots = opts.roots;
-
-    _.uniq(targets);
-
-    this._targets = targets;
-    this._reverseTargets = _.invert(targets);
+    this._protoFiles = opts.protoFiles;
     this._packageFilesAnalyzing = opts.packageFilesAnalyzing;
   }
 
+  resolvePath(origin, target) {
+    if (path.isAbsolute(target)) {
+      return target;
+    }
+
+    return this._protoFiles.forOrigin(origin, target);
+  }
+
   async loadContext() {
-    const root = await super.load(this.protoFiles());
+    const root = await super.load(this._protoFiles.topLevelFiles);
 
     root.queryTypesFor = (args) => queryTypesFor(root, args);
     root.resolve = (node, name) => resolve(root, node, name);
@@ -214,28 +128,8 @@ class ResolutionRoot extends pbjs.Root {
     return root;
   }
 
-  protoFiles() {
-    return Object.values(this._targets);
-  }
-
   loadedFiles() {
     return this.files;
-  }
-
-  resolveContextPath(filename) {
-    return this._reverseTargets[filename];
-  }
-
-  resolvePath(origin, target) {
-    if (this._targets[target]) {
-      return this._targets[target];
-    }
-
-    if (origin.endsWith('.proto')) {
-      return path.resolve(path.dirname(origin), target);
-    } else {
-      return path.resolve(origin, target);
-    }
   }
 
   async exportsFor(namespace, name) {
@@ -309,30 +203,241 @@ async function resolve(root, node, name) {
   };
 }
 
-function collectFileDependencies(root, typeSets, index) {
-  if (typeSets.length === 0) {
-    return;
+class NpmPackages {
+  constructor(sourceRoots, packagesDirName) {
+    this._sourceRoots = sourceRoots;
+    this._packagesDirName = packagesDirName;
+    this._allPackages = {};
   }
 
-  const deps = [];
+  async loadAt(pathToPackage) {
+    if (this._allPackages[pathToPackage]) {
+      return this._allPackages[pathToPackage];
+    }
 
-  typeSets.forEach(types => {
-    const typeDeps = _.uniq(_.flatten(types.map(type => typeDepsFor(root, type))));
+    const packageJson = JSON.parse(await fs.readFile(path.join(pathToPackage, 'package.json')));
 
-    typeDeps.forEach(type => {
-      deps.concat(addFileDepsToIndex(type.parent, type.filename, index));
-    });
-  });
+    const sourceRootPaths =  this._sourceRoots.map((sourceRootPath) =>  path.join(pathToPackage, sourceRootPath));
+    const existingRootPaths = await Promise.all(sourceRootPaths.filter(async(rootPath) => await fs.exists(rootPath)));
 
-  collectFileDependencies(root, deps, index);
+    const packageSearchPaths = [path.join(pathToPackage, this._packagesDirName)];
+    let currentPath = pathToPackage;
+
+    while (currentPath && currentPath.length > 1) {
+      currentPath = path.resolve(currentPath, '..');
+
+      if (this._allPackages[currentPath]) {
+        packageSearchPaths.push(path.join(currentPath, this._packagesDirName));
+      }
+    }
+
+    const depLoader = new DepLoader(this, packageSearchPaths, pathToPackage);
+    const npmPackage = new NpmPackage(depLoader, pathToPackage, existingRootPaths, packageJson);
+
+    this._allPackages[pathToPackage] = npmPackage;
+
+    return npmPackage;
+  }
 }
 
-function addFileDepsToIndex(namespace, filename, index) {
-  if (filename && !index[filename]) {
-    index[filename] = _.filter(namespace.nested, (nested) => nested.filename === filename);
-    return index[filename];
-  } else {
-    return [];
+class ProtoFiles {
+
+  static async from(mainPackage, sourceRootsMap, implicitPackages) {
+    const roots = Array.from(sourceRootsMap.values());
+    const fileEntries = _.flatten(await Promise.all(
+      roots.map((root) => root.protoFiles().then((files) => files.map((file) => [file, root])))));
+
+    const filesInSourceRoots = new Map(Object.entries(_.groupBy(fileEntries, ([, root]) => root.path))
+      .map(([rootPath, entries]) => [rootPath, new Set(entries.map(([{path},_]) => path))]));
+    const absoluteEntries = new Map(fileEntries.map(([{absolutePath}, root]) => [absolutePath, root]));
+    const {rootDeps, packages} = await ProtoFiles.resolveRootDeps(mainPackage);
+
+    const mainPackageDeps = Array.from((await mainPackage.dependencies()).values())
+    const topLevelPackages = [mainPackage].concat(mainPackageDeps);
+
+    const topLevelFiles = _.flatten(await Promise.all(topLevelPackages.map((pkg) => pkg.protoFiles())));
+
+    return new ProtoFiles(topLevelFiles.map(({absolutePath}) => absolutePath),
+      absoluteEntries, rootDeps, filesInSourceRoots,
+      packages, implicitPackages);
+  }
+
+  static async resolveRootDeps(npmPackage, rootDeps = new Map(), packages = new Set([npmPackage])) {
+    const deps = await npmPackage.dependencies();
+    const depPackages = Array.from(deps.values());
+
+    deps.forEach((dep) => packages.add(dep));
+
+    const depSourceRoots = _.flatten(depPackages.map((dep) => dep.sourceRoots.map((root) => root.path)));
+
+    npmPackage.sourceRoots.forEach((sourceRoot) => {
+      rootDeps.set(sourceRoot.path, new Set(depSourceRoots));
+    });
+
+    await Promise.all(depPackages.map((dep) => ProtoFiles.resolveRootDeps(dep, rootDeps, packages)));
+
+    return {rootDeps, packages};
+  }
+
+  constructor(topLevelFiles, absoluteEntries, sourceRootDeps, filesInSourceRoots,
+    packages, implicitPackages) {
+
+    this._topLevelFiles = topLevelFiles;
+    this._absoluteEntries = absoluteEntries;
+    this._sourceRootDeps = sourceRootDeps;
+    this._filesInSourceRoots = filesInSourceRoots;
+    this._implicitPackages = implicitPackages;
+    this._packages = packages;
+  }
+
+  get packages() {
+    return this._packages;
+  }
+
+  get topLevelFiles() {
+    return this._topLevelFiles;
+  }
+
+  forOrigin(protoFile, relativePath) {
+    const originRoot = this._absoluteEntries.get(protoFile);
+    const directDeps = this._sourceRootDeps.get(originRoot.path);
+
+    if (!directDeps) {
+      throw new Error(`Could not resolve ${relativePath} from ${protoFile}`);
+    }
+
+    const depRoots = Array.from(this._sourceRootDeps.get(originRoot.path).keys())
+      .concat(this._implicitPackages);
+
+    const foundRoot = _.find(depRoots, (root) => this._filesInSourceRoots.get(root).has(relativePath));
+
+    if (!foundRoot) {
+      throw new Error(`Could not resolve dependency matching ${relativePath}. Available deps: ${depRoots.join(',')}`);
+    }
+
+    // const deps = this._sourceRootDeps.get(root.path);
+
+    return path.resolve(foundRoot, relativePath);
+  }
+}
+
+class DepLoader {
+  constructor(packages, searchPaths, contextPath) {
+    this._contextPath = contextPath;
+    this._packages = packages;
+    this._searchPaths = searchPaths;
+  }
+
+  loadPackage(name) {
+    const searchPaths = this._searchPaths.slice();
+
+    return this._loadPackage(searchPaths, name);
+  }
+
+  async _loadPackage(searchPaths, name) {
+    const searchPath = searchPaths.shift();
+
+    const packagePath = path.join(searchPath, name);
+
+    if (await fs.exists(packagePath)) {
+      return this._packages.loadAt(packagePath);
+    }
+
+    if (searchPaths.length > 0) {
+      return this._loadPackage(searchPaths, name);
+    }
+
+    throw new Error(`Could not load package ${name} from context ${this._contextPath}`)
+  }
+}
+
+class NpmPackage {
+
+  constructor(depLoader, path, sourceRoots, packageJson) {
+    this._depLoader = depLoader;
+    this._path = path;
+    this._sourceRoots = sourceRoots.map((rootPath) => new SourceRoot(this, rootPath));
+    this._packageJson = packageJson;
+    this._deps = Object.keys(
+      Object.assign(packageJson.devDependencies || {}, packageJson.peerDependencies || {}, packageJson.dependencies || {}));
+    this._loadingDeps = {};
+  }
+
+  get path() {
+    return this._path;
+  }
+
+  get packageJson() {
+    return this._packageJson;
+  }
+
+  get sourceRoots() {
+    return this._sourceRoots;
+  }
+
+  async protoFiles() {
+    return _.flatten(await Promise.all(this._sourceRoots.map((root) => root.protoFiles())));
+  }
+
+  async dependencies() {
+    return new Map(await Promise.all(this._deps.map((dep) => this._loadPackage(dep).then((pkg) => [dep, pkg]))));
+  }
+
+  async collectAllSourceRoots() {
+    const directRoots = new Map();
+
+    this._sourceRoots.forEach((root) => {
+      directRoots.set(root.path, root);
+    });
+
+    const deps = Array.from((await this.dependencies()).values());
+    const sourceRootMaps = await Promise.all(deps.map((pkg) => pkg.collectAllSourceRoots()));
+
+    sourceRootMaps.unshift(directRoots);
+
+    return sourceRootMaps.reduce((map1, map2) =>
+      new Map([...map1, ...map2])
+    );
+  }
+
+  async _loadPackage(name) {
+    if (!this._loadingDeps[name]) {
+      this._loadingDeps[name] = this._depLoader.loadPackage(name);
+    }
+
+    return this._loadingDeps[name];
+  }
+}
+
+class SourceRoot {
+
+  constructor(pkg, path) {
+    this._package = pkg;
+    this._path = path;
+    this._protofilesLoading = null;
+  }
+
+  get path() {
+    return this._path;
+  }
+
+  get package() {
+    return this._package;
+  }
+
+  async protoFiles() {
+    if (this._protofilesLoading) {
+      return this._protofilesLoading;
+    }
+
+    const files = await glob('**/*.proto', {
+      cwd: this._path
+    });
+
+    return files.map((relPath) => ({
+      path: relPath,
+      absolutePath: path.join(this._path, relPath)
+    }));
   }
 }
 
