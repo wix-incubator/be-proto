@@ -41,7 +41,7 @@ describe('http-client-gen', () => {
     const givenContext = create({
       contextDir: path.join(__dirname, 'fixtures/complex-proto-messages'),
       packagesDirName: 'deps',
-      extraPackages: [path.join(__dirname, 'proto')]
+      extraPackages: []
     });
 
     const clientGen = httpClientGen(givenContext);
