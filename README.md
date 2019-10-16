@@ -47,7 +47,7 @@ Add to `package.json`
 ```json
 {
   "scripts": {
-    "build": "be http-client --output ./be-client types"
+    "build": "be http-client --output ./be-client hello.HelloService"
   }
 }
 ```
