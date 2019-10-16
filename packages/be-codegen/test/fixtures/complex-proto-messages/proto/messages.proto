@@ -6,6 +6,11 @@ message Message {
   message NestedMessage {
     string message = 1;
   }
+
+  oneof some_oneof {
+    CircularMessage circular = 2;
+    NestedCircularMessage nested_circular = 3;
+  }
 }
 
 message CircularMessage {

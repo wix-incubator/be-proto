@@ -91,7 +91,7 @@ function generateReexport(messageOrEnumType, metadata, refs) {
 function generateEnum(enumType, refs = codeReferences([enumType])) {
   const {jsFields} = formatEnumFields(enumType.values);
 
-  const fnCode = `${refs.jsReference('EnumBuilder')}.create()${jsFields}.build()`;
+  const fnCode = `${refs.jsReference('enumBuilder')}.create()${jsFields}.build()`;
 
   return {
     name: enumType.name,

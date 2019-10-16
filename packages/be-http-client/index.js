@@ -1,4 +1,4 @@
-const {httpBinding, wellKnownTypes, messageBuilder} = require('@wix/be-http-binding');
+const {httpBinding, wellKnownTypes, messageBuilder, enumBuilder} = require('@wix/be-http-binding');
 const fetchInvoker = require('./lib/fetch-invoker');
 const httpClientOptions = require('./lib/http-client-options');
 
@@ -7,5 +7,10 @@ module.exports = {
   ...httpBinding,
   http: httpClientOptions,
   ...wellKnownTypes,
-  messageBuilder
+  messageBuilder,
+  enumBuilder,
+  oneOf
 };
+
+function oneOf(name) {
+}

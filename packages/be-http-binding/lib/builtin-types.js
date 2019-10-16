@@ -14,7 +14,16 @@ module.exports = {
   int32: {
     fromValue: parseInt32()
   },
+  sint32: {
+    fromValue: parseInt32()
+  },
   uint32: {
+    fromValue: parseInt32()
+  },
+  fixed32: {
+    fromValue: parseInt32()
+  },
+  sfixed32: {
     fromValue: parseInt32()
   },
   double: {
@@ -25,6 +34,9 @@ module.exports = {
   },
   int64: LongValue,
   uint64: LongValue,
+  sint64: LongValue,
+  fixed64: LongValue,
+  sfixed64: LongValue,
   LongValue,
   bytes: {
     fromValue(value) {

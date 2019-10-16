@@ -3,7 +3,7 @@ syntax = "proto3";
 package test;
 
 import "google/protobuf/wrappers.proto";
-import "wix/api/http.proto";
+import "google/api/http.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
@@ -45,7 +45,6 @@ message AllTypes {
     ForeignMessage optional_foreign_message = 19;
     NestedEnum optional_nested_enum = 21;
     ForeignEnum optional_foreign_enum = 22;
-    AliasedEnum optional_aliased_enum = 23;
     string optional_string_piece = 24 [ctype = STRING_PIECE];
     string optional_cord = 25 [ctype = CORD];
     TestAllTypesProto3 recursive_message = 27;
@@ -156,14 +155,6 @@ message AllTypes {
         BAR = 1;
         BAZ = 2;
         NEG = -1;
-    }
-
-    enum AliasedEnum {
-        ALIAS_FOO = 0;
-        ALIAS_BAR = 1;
-        ALIAS_BAZ = 2;
-
-        option allow_alias = true;
     }
 
     message NestedMessage {

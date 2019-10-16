@@ -15,7 +15,7 @@
     "@types/mocha": "^5.2.7",
     "@types/node-fetch": "^2.3.4",
     "@wix/be-codegen": "^1.0.40",
-    "@wix/be-http-client": "^1.0.116",
+    "@wix/be-http-client": "^1.0.117",
     "@wix/well-known-protos": "^1.0.137",
     "chai": "^4.2.0",
     "chai-things": "^0.2.0",
