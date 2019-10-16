@@ -1,6 +1,4 @@
 const pbjs = require('protobufjs');
-const TrieSearch = require('trie-search');
-const klaw = require('klaw-promise');
 const path = require('path');
 const _ = require('lodash');
 const fs = require('fs-extra');
@@ -303,7 +301,7 @@ class ProtoFiles {
   }
 
   forOrigin(protoFile, relativePath) {
-    console.log('=== A', protoFile, relativePath);
+    debug(`Resolving proto file '${relativePath}' from '${protoFile}'`);
 
     if (!protoFile.endsWith('.proto')) {
       return path.resolve(protoFile, relativePath);
