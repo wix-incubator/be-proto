@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package test;
 
-import "google/protobuf/wrappers.proto";
-
 message Message {
   message NestedMessage {
     string message = 1;
