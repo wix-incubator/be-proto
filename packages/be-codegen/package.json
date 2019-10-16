@@ -23,28 +23,29 @@
     "be": "scripts/be.js"
   },
   "devDependencies": {
-    "@types/chai": "^4.1.7",
+    "@types/chai": "^4.2.3",
     "@types/mocha": "^5.2.7",
-    "@types/node-fetch": "^2.3.4",
-    "@wix/be-http-client": "^1.0.0",
-    "@wix/be-server": "^1.0.6",
-    "@wix/well-known-protos": "^1.0.1",
+    "@types/node-fetch": "^2.5.2",
+    "@wix/be-http-client": "^1.0.116",
+    "@wix/be-server": "^1.0.111",
+    "@wix/well-known-protos": "^1.0.137",
     "chai": "^4.2.0",
     "chai-things": "^0.2.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.15",
     "mocha": "^5.2.0",
     "mocha-env-reporter": "^3.0.0",
     "node-eval": "^2.0.0",
     "node-fetch": "^2.6.0",
-    "ts-node": "^8.2.0",
-    "tslib": "^1.9.3",
-    "typescript": "^3.5.1",
+    "ts-node": "^8.4.1",
+    "tslib": "^1.10.0",
+    "typescript": "^3.6.4",
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {
-    "@wix/proto-packages": "^1.0.18",
+    "@wix/be-http-binding": "^1.0.121",
+    "@wix/proto-packages": "^1.0.131",
     "debug": "^4.1.1",
-    "fs-extra": "^8.0.1",
+    "fs-extra": "^8.1.0",
     "protobufjs": "^6.8.8"
   }
 }

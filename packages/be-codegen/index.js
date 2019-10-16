@@ -5,6 +5,7 @@ const exec = util.promisify(require('child_process').exec);
 const {httpClientGen} = require('./lib/http-client-gen');
 const {outputToFiles} = require('./lib/output-to-files');
 const debug = require('debug')('be-codegen');
+const path = require('path');
 
 function main(args) {
   const terminator = args.indexOf('--');
@@ -72,10 +73,17 @@ function createContext(args) {
   const sourceRoots = args['source-roots'] ? args['source-roots'].split(',') : ['proto', 'src/main/proto'];
   const extra = args['extra'];
 
+  const pathToHttpBindingProto = path.resolve(path.dirname(require.resolve('@wix/be-http-binding')), 'proto');
+  const extraPackages = extra ? (Array.isArray(extra) ? extra : [extra]) : [];
+
+  extraPackages.push(pathToHttpBindingProto);
+
+  debug(`Using extra packages ${extraPackages.join(', ')}`);
+
   const options = {
     contextDir: workDir,
     sourceRoots,
-    extraPackages: extra ? (Array.isArray(extra) ? extra : [extra]) : []
+    extraPackages
   };
 
   debug('Creating context', options);

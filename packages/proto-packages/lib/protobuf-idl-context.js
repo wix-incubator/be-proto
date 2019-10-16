@@ -115,6 +115,10 @@ class ResolutionRoot extends pbjs.Root {
       return target;
     }
 
+    if (origin === '') {
+      origin = path.resolve('.');
+    }
+
     return this._protoFiles.forOrigin(origin, target);
   }
 
@@ -299,7 +303,18 @@ class ProtoFiles {
   }
 
   forOrigin(protoFile, relativePath) {
+    console.log('=== A', protoFile, relativePath);
+
+    if (!protoFile.endsWith('.proto')) {
+      return path.resolve(protoFile, relativePath);
+    }
+
     const originRoot = this._absoluteEntries.get(protoFile);
+
+    if (!originRoot) {
+      throw new Error(`Could not resolve source root for ${protoFile}`);
+    }
+
     const directDeps = this._sourceRootDeps.get(originRoot.path);
 
     if (!directDeps) {
@@ -436,7 +451,7 @@ class SourceRoot {
 
     return files.map((relPath) => ({
       path: relPath,
-      absolutePath: path.join(this._path, relPath)
+      absolutePath: path.resolve(this._path, relPath)
     }));
   }
 }
