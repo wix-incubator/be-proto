@@ -8,7 +8,7 @@ module.exports = function protoModulesBindings(contextOptions, serviceBindings) 
   return {
     async bindings() {
       const pathToHttpBindingProto = path.resolve(path.dirname(require.resolve('@wix/be-http-binding')), 'proto');
-      const extra = contextOptions.extra;
+      const extra = contextOptions.extraPackages;
       const extraPackages = extra ? (Array.isArray(extra) ? extra : [extra]) : [];
 
       extraPackages.push(pathToHttpBindingProto);

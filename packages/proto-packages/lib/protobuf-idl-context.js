@@ -46,7 +46,7 @@ function create(options) {
 
     const protoFiles = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
 
-    debug(`Resolved ${protoFiles.packages.length} packages and ${protoFiles.topLevelFiles.length} top level files files`);
+    debug(`Resolved ${Array.from(protoFiles.packages).length} packages and ${protoFiles.topLevelFiles.length} top level files`);
 
     return new ResolutionRoot({
       origin: contextDir,
@@ -63,12 +63,16 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
   const depsSourceRoots = await mainPackage.collectAllSourceRoots();
 
   const extraPackagesFullPath = extraPackages.map((extraPath) => path.resolve(extraPath));
+  const extraSourceRoots = [];
 
   extraPackagesFullPath.forEach((extraPackagePath) => {
-    depsSourceRoots.set(extraPackagePath, new SourceRoot(null, extraPackagePath));
+    const extraSourceRoot = new SourceRoot(null, extraPackagePath);
+
+    extraSourceRoots.push(extraSourceRoot);
+    depsSourceRoots.set(extraPackagePath, extraSourceRoot);
   });
 
-  return ProtoFiles.from(mainPackage, depsSourceRoots, extraPackagesFullPath);
+  return ProtoFiles.from(mainPackage, depsSourceRoots, extraSourceRoots);
 }
 
 async function analyzePackageFiles(packageSet) {
@@ -220,7 +224,8 @@ class NpmPackages {
     const packageJson = JSON.parse(await fs.readFile(path.join(pathToPackage, 'package.json')));
 
     const sourceRootPaths =  this._sourceRoots.map((sourceRootPath) =>  path.join(pathToPackage, sourceRootPath));
-    const existingRootPaths = await Promise.all(sourceRootPaths.filter(async(rootPath) => await fs.exists(rootPath)));
+    const existingRootPaths = _.filter(await Promise.all(sourceRootPaths.map((rootPath) => fs.exists(rootPath).then((exists) => [rootPath, exists]))),
+      ([, exists]) => exists).map(([rootPath,]) => rootPath);
 
     const packageSearchPaths = [path.join(pathToPackage, this._packagesDirName)];
     let currentPath = pathToPackage;
@@ -244,7 +249,7 @@ class NpmPackages {
 
 class ProtoFiles {
 
-  static async from(mainPackage, sourceRootsMap, implicitPackages) {
+  static async from(mainPackage, sourceRootsMap, implicitSourceRoots) {
     const roots = Array.from(sourceRootsMap.values());
     const fileEntries = _.flatten(await Promise.all(
       roots.map((root) => root.protoFiles().then((files) => files.map((file) => [file, root])))));
@@ -258,12 +263,17 @@ class ProtoFiles {
 
     const mainPackageDeps = Array.from((await mainPackage.allDependencies()).values())
     const topLevelPackages = [mainPackage].concat(mainPackageDeps);
+    const topLevelSourceRoots = _.flatten(topLevelPackages.map((pkg) => pkg.sourceRoots)).concat(implicitSourceRoots);
 
-    const topLevelFiles = _.flatten(await Promise.all(topLevelPackages.map((pkg) => pkg.protoFiles())));
+    const topLevelFiles = _.flatten(await Promise.all(topLevelSourceRoots.map((root) => root.protoFiles())));
+
+    topLevelFiles.forEach((file) => {
+      debug(`Top-level file resolved ${file.absolutePath}`);
+    });
 
     return new ProtoFiles(topLevelFiles.map(({absolutePath}) => absolutePath),
       absoluteEntries, rootDeps, filesInSourceRoots,
-      packages, implicitPackages);
+      packages, implicitSourceRoots);
   }
 
   static async resolveRootDeps(npmPackage, includeDev = true, rootDeps = new Map(), packages = new Set([npmPackage])) {
@@ -284,13 +294,13 @@ class ProtoFiles {
   }
 
   constructor(topLevelFiles, absoluteEntries, sourceRootDeps, filesInSourceRoots,
-    packages, implicitPackages) {
+    packages, implicitSourceRoots) {
 
     this._topLevelFiles = topLevelFiles;
     this._absoluteEntries = absoluteEntries;
     this._sourceRootDeps = sourceRootDeps;
     this._filesInSourceRoots = filesInSourceRoots;
-    this._implicitPackages = implicitPackages;
+    this._implicitSourceRoots = implicitSourceRoots;
     this._packages = packages;
   }
 
@@ -315,22 +325,16 @@ class ProtoFiles {
       throw new Error(`Could not resolve source root for ${protoFile}`);
     }
 
-    const directDeps = this._sourceRootDeps.get(originRoot.path);
+    const directDeps = this._sourceRootDeps.get(originRoot.path) || new Map();
 
-    if (!directDeps) {
-      throw new Error(`Could not resolve ${relativePath} from ${protoFile}`);
-    }
-
-    const depRoots = Array.from(this._sourceRootDeps.get(originRoot.path).keys())
-      .concat(this._implicitPackages);
+    const depRoots = Array.from(directDeps.keys())
+      .concat(this._implicitSourceRoots.map((root) => root.path));
 
     const foundRoot = _.find(depRoots, (root) => this._filesInSourceRoots.get(root).has(relativePath));
 
     if (!foundRoot) {
       throw new Error(`Could not resolve dependency matching ${relativePath}. Available deps: ${depRoots.join(',')}`);
     }
-
-    // const deps = this._sourceRootDeps.get(root.path);
 
     return path.resolve(foundRoot, relativePath);
   }

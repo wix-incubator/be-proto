@@ -23,7 +23,7 @@
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {
-    "@wix/be-http-binding": "^1.0.122",
+    "@wix/be-http-binding": "^1.0.123",
     "@wix/proto-packages": "^1.0.133",
     "find-root": "^1.1.0",
     "url-pattern": "^1.0.3"

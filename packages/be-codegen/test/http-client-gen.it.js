@@ -37,7 +37,7 @@ describe('http-client-gen', () => {
     expect(output.entryFor('be-proto').json).to.have.property('@wix/be-http-client');
   });
 
-  it.only('should output a circular message', async() => {
+  it('should output a circular message', async() => {
     const givenContext = create({
       contextDir: path.join(__dirname, 'fixtures/complex-proto-messages'),
       packagesDirName: 'deps',

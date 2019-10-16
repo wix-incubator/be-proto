@@ -15,8 +15,8 @@
     "@types/mocha": "^5.2.7",
     "@types/node-fetch": "^2.3.4",
     "@wix/be-codegen": "^1.0.40",
-    "@wix/be-http-client": "^1.0.114",
-    "@wix/well-known-protos": "^1.0.1",
+    "@wix/be-http-client": "^1.0.116",
+    "@wix/well-known-protos": "^1.0.137",
     "chai": "^4.2.0",
     "chai-things": "^0.2.0",
     "lodash": "^4.17.11",
@@ -29,6 +29,6 @@
     "wnpm-ci": "^6.2.55"
   },
   "dependencies": {
-    "@wix/be-server": "^1.0.6"
+    "@wix/be-server": "^1.0.111"
   }
 }

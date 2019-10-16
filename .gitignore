@@ -3,6 +3,7 @@
 node_modules
 yarn.lock
 package-info.lock
+package-lock.json
 yarn-error.log
 target
 **/test/proto
