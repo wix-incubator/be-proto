@@ -159,7 +159,7 @@ describe('message-generator', () => {
 
     const generatedMessage = generateEnum(givenProto.root.nested.TestEnum);
 
-    expect(generatedMessage.js.code).to.include(`EnumBuilder`);
+    expect(generatedMessage.js.code).to.include(`enumBuilder`);
     expect(generatedMessage.js.code).to.include(`.value('A', 0)`);
     expect(generatedMessage.js.code).to.include(`.value('B', 1)`);
   });
@@ -186,7 +186,7 @@ describe('message-generator', () => {
     const generatedMessage = generateMessageUnit(givenProto.root.nested.TestMessage);
 
     expect(generatedMessage.nested.TestNestedMessage.js.code).to.include(`messageBuilder`);
-    expect(generatedMessage.nested.TestEnum.js.code).to.include(`EnumBuilder`);
+    expect(generatedMessage.nested.TestEnum.js.code).to.include(`enumBuilder`);
     expect(generatedMessage.js.refs.TestNestedMessage).to.deep.equal({
       id: 'TestNestedMessage',
       name: 'TestNestedMessage',
