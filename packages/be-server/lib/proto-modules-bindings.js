@@ -2,14 +2,22 @@ const {create} = require('@wix/proto-packages');
 const defaultContextDir = require('find-root')(process.argv[1]);
 const messageTypes = require('./message-types');
 const {resolveHttpRoutes, httpBinding} = require('@wix/be-http-binding');
+const path = require('path');
 
 module.exports = function protoModulesBindings(contextOptions, serviceBindings) {
   return {
     async bindings() {
+      const pathToHttpBindingProto = path.resolve(path.dirname(require.resolve('@wix/be-http-binding')), 'proto');
+      const extra = contextOptions.extra;
+      const extraPackages = extra ? (Array.isArray(extra) ? extra : [extra]) : [];
+
+      extraPackages.push(pathToHttpBindingProto);
+
       const protoContext = create({
         contextDir: defaultContextDir,
-        ...contextOptions
-      });    
+        ...contextOptions,
+        extraPackages
+      });
       const loadedContext = await protoContext.loadedContext();
 
       return loadProtoBindings(loadedContext, serviceBindings);
