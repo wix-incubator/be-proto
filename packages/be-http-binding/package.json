@@ -10,7 +10,7 @@
   "private": false,
   "scripts": {
     "build": "npm run copy:proto-generic && npm run copy:proto-http",
-    "copy:proto-generic": "mkdir -p proto/google/protobuf && cp node_modules/@wix/well-known-protos/protobuf/google/protobuf/*.proto proto/google/protobuf",
+    "copy:proto-generic": "mkdir -p proto/google/protobuf && rsync -aP --exclude=*unittest* node_modules/@wix/well-known-protos/protobuf/google/protobuf/*.proto proto/google/protobuf",
     "copy:proto-http": "mkdir -p proto/google/api && cp node_modules/@wix/well-known-protos/googleapis/google/api/http.proto proto/google/api",
     "test": "mocha test lib/**/*.spec.js --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
