@@ -1,1 +1,5 @@
-{}
+{
+  "devDependencies": {
+    "i-am-a-dev-dependency-dont-fail": "*"
+  }
+}

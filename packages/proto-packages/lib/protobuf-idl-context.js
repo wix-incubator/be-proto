@@ -252,9 +252,11 @@ class ProtoFiles {
     const filesInSourceRoots = new Map(Object.entries(_.groupBy(fileEntries, ([, root]) => root.path))
       .map(([rootPath, entries]) => [rootPath, new Set(entries.map(([{path},_]) => path))]));
     const absoluteEntries = new Map(fileEntries.map(([{absolutePath}, root]) => [absolutePath, root]));
-    const {rootDeps, packages} = await ProtoFiles.resolveRootDeps(mainPackage);
+    const {rootDeps, packages} = await ProtoFiles.resolveRootDeps(mainPackage, true);
 
-    const mainPackageDeps = Array.from((await mainPackage.dependencies()).values())
+    // FIXME repetition to resolve dependencies and includeDev flag. Probably should be combined.
+
+    const mainPackageDeps = Array.from((await mainPackage.allDependencies()).values())
     const topLevelPackages = [mainPackage].concat(mainPackageDeps);
 
     const topLevelFiles = _.flatten(await Promise.all(topLevelPackages.map((pkg) => pkg.protoFiles())));
@@ -264,8 +266,8 @@ class ProtoFiles {
       packages, implicitPackages);
   }
 
-  static async resolveRootDeps(npmPackage, rootDeps = new Map(), packages = new Set([npmPackage])) {
-    const deps = await npmPackage.dependencies();
+  static async resolveRootDeps(npmPackage, includeDev = true, rootDeps = new Map(), packages = new Set([npmPackage])) {
+    const deps = await (includeDev ? npmPackage.allDependencies() : npmPackage.dependencies());
     const depPackages = Array.from(deps.values());
 
     deps.forEach((dep) => packages.add(dep));
@@ -276,7 +278,7 @@ class ProtoFiles {
       rootDeps.set(sourceRoot.path, new Set(depSourceRoots));
     });
 
-    await Promise.all(depPackages.map((dep) => ProtoFiles.resolveRootDeps(dep, rootDeps, packages)));
+    await Promise.all(depPackages.map((dep) => ProtoFiles.resolveRootDeps(dep, false, rootDeps, packages)));
 
     return {rootDeps, packages};
   }
@@ -372,7 +374,8 @@ class NpmPackage {
     this._sourceRoots = sourceRoots.map((rootPath) => new SourceRoot(this, rootPath));
     this._packageJson = packageJson;
     this._deps = Object.keys(
-      Object.assign(packageJson.devDependencies || {}, packageJson.peerDependencies || {}, packageJson.dependencies || {}));
+      Object.assign({}, packageJson.peerDependencies || {}, packageJson.dependencies || {}));
+    this._devDeps = Object.keys(Object.assign({}, packageJson.devDependencies));
     this._loadingDeps = {};
   }
 
@@ -392,25 +395,37 @@ class NpmPackage {
     return _.flatten(await Promise.all(this._sourceRoots.map((root) => root.protoFiles())));
   }
 
-  async dependencies() {
-    return new Map(await Promise.all(this._deps.map((dep) => this._loadPackage(dep).then((pkg) => [dep, pkg]))));
+  async allDependencies() {
+    const deps = [...this._deps, ...this._devDeps];
+
+    return this._loadDeps(deps);
   }
 
-  async collectAllSourceRoots() {
+  async dependencies() {
+    return this._loadDeps(this._deps);
+  }
+
+  async collectAllSourceRoots(includeDev = true) {
     const directRoots = new Map();
 
     this._sourceRoots.forEach((root) => {
       directRoots.set(root.path, root);
     });
 
-    const deps = Array.from((await this.dependencies()).values());
-    const sourceRootMaps = await Promise.all(deps.map((pkg) => pkg.collectAllSourceRoots()));
+    const depsResolving = includeDev ? this.allDependencies() : this.dependencies();
+
+    const deps = Array.from((await depsResolving).values());
+    const sourceRootMaps = await Promise.all(deps.map((pkg) => pkg.collectAllSourceRoots(false)));
 
     sourceRootMaps.unshift(directRoots);
 
     return sourceRootMaps.reduce((map1, map2) =>
       new Map([...map1, ...map2])
     );
+  }
+
+  async _loadDeps(deps) {
+    return new Map(await Promise.all(deps.map((dep) => this._loadPackage(dep).then((pkg) => [dep, pkg]))));
   }
 
   async _loadPackage(name) {
