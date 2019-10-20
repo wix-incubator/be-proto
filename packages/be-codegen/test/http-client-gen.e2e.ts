@@ -16,10 +16,7 @@ describe('http-client-gen', function() {
 
   before(async() => {
     server = await beServer.builder()
-      .withBindings([{
-        binding: Get,
-        invoke: (message: Message): Message => message
-      }])
+      .withBindings(Get.bind((message: Message) => Promise.resolve(message)))
       .start({ port: 9901 });
   });
 

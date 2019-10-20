@@ -10,6 +10,10 @@ describe('builtin-types', () => {
         expect(builtInTypes.string.fromValue(from)).to.equal(to);
       })
     );
+
+    it('should write to JSON', () => {
+      expect(builtInTypes.string.toJSON('Hello')).to.equal('Hello');
+    });
   });
 
   describe('int32', () => {
@@ -19,6 +23,14 @@ describe('builtin-types', () => {
         expect(builtInTypes.int32.fromValue(from)).to.equal(to);
       })
     );
+
+    it('should write to JSON', () => {
+      expect(builtInTypes.int32.toJSON(1)).to.equal(1);
+    });
+
+    it('should round to floor', () => {
+      expect(builtInTypes.int32.toJSON(1.7)).to.equal(1);
+    });
   });
 
   describe('double', () => {
@@ -28,6 +40,10 @@ describe('builtin-types', () => {
         expect(builtInTypes.double.fromValue(from)).to.equal(to);
       })
     );
+
+    it('should write to JSON', () => {
+      expect(builtInTypes.double.toJSON(12.3)).to.equal(12.3);
+    });
   });
 
   describe('float', () => {
@@ -46,6 +62,10 @@ describe('builtin-types', () => {
         expect(builtInTypes.bool.fromValue(from)).to.equal(to);
       })
     );
+
+    it('should write to JSON', () => {
+      expect(builtInTypes.bool.toJSON(true)).to.equal(true);
+    });
   });
 
   describe('bytes', () => {
@@ -57,6 +77,12 @@ describe('builtin-types', () => {
         expect(builtInTypes.bytes.fromValue(from)).to.deep.equal(to);
       })
     );
+
+    it('should write to JSON', () => {
+      const givenValue = Buffer.from('Hello', 'utf-8');
+
+      expect(builtInTypes.bytes.toJSON(givenValue)).to.equal('SGVsbG8=');
+    });
   });
 
   describe('int64', () => {

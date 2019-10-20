@@ -1,37 +1,43 @@
 const LongValue = require('./long-value');
 
+const IntValue = {
+  fromValue: parseInt32(),
+  toJSON(value) {
+    return Math.floor(value);
+  }
+};
+
+const NumberValue = {
+  fromValue: fromValueAsNumber(parseFloat),
+  toJSON(value) {
+    return value;
+  }
+};
+
 module.exports = {
   string: {
     fromValue(value) {
       return (value || '').toString();
+    },
+    toJSON(value) {
+      return value.toString();
     }
   },
   bool: {
     fromValue(value) {
       return value == true || false;
+    },
+    toJSON(value) {
+      return value == true;
     }
   },
-  int32: {
-    fromValue: parseInt32()
-  },
-  sint32: {
-    fromValue: parseInt32()
-  },
-  uint32: {
-    fromValue: parseInt32()
-  },
-  fixed32: {
-    fromValue: parseInt32()
-  },
-  sfixed32: {
-    fromValue: parseInt32()
-  },
-  double: {
-    fromValue: fromValueAsNumber(parseFloat)
-  },
-  float: {
-    fromValue: fromValueAsNumber(parseFloat)
-  },
+  int32: IntValue,
+  sint32: IntValue,
+  uint32: IntValue,
+  fixed32: IntValue,
+  sfixed32: IntValue,
+  double: NumberValue,
+  float: NumberValue,
   int64: LongValue,
   uint64: LongValue,
   sint64: LongValue,
@@ -41,6 +47,9 @@ module.exports = {
   bytes: {
     fromValue(value) {
       return value ? Buffer.from(value, 'base64') : Buffer.from('', 'utf-8');
+    },
+    toJSON(value) {
+      return value.toString('base64');
     }
   }
 };

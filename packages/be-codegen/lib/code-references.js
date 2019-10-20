@@ -13,6 +13,15 @@ module.exports = function codeReferences(localTypes = []) {
     tsReference(id, source = null) {
       return ifNotLocal(id, source, () => fqnReference(id, source, tsRefs), id);
     },
+    isLocal(id, source = null) {
+      if (source) {
+        const refType = source.lookup(id);
+
+        return !!refType;
+      }
+
+      return false;
+    },
     get jsRefs() {
       return jsRefs;
     },

@@ -19,13 +19,10 @@ describe('http-client', function() {
 
   before(async() => {
     server = await beServer.builder()
-      .withBindings([{
-        binding: getEcho,
-        invoke: (message) => message
-      }])
+      .withBindings(getEcho.bind((message) => message))
       .start({ port: 9901 });
   });
-  
+
   after(() => server.stop());
 
   it('should call a server', async() => {

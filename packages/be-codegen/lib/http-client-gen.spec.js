@@ -1,4 +1,4 @@
-const {mapLocalImport} = require('./http-client-gen');
+const {mapLocalImport, formatMessagesCode} = require('./http-client-gen');
 const {expect} = require('chai');
 
 describe('http-client-gen', () => {

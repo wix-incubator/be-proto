@@ -13,4 +13,11 @@ module.exports = {
 };
 
 function oneOf(name) {
+  return {
+    define() {
+      return {
+        oneOf: name
+      };
+    }
+  }
 }

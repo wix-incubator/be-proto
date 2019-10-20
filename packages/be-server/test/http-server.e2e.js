@@ -25,10 +25,8 @@ describe('HTTP server', function() {
           typesEcho: (message) => message,
         }
       }))
-      .withBindings([{
-        binding: http(get('/api/dynamic-echo'), echoMessage, echoMessage),
-        invoke: (message) => message
-      }])
+      .withBindings(
+        http(get('/api/dynamic-echo'), echoMessage, echoMessage).bind((message) => message))
       .start({ port: 9901 });
   });
 

@@ -12,14 +12,29 @@ function http(binding, requestMessage, responseMessage, methodOptions = {}) {
     httpRoutes() {
       return [binding.httpRoute()];
     },
-    createInvoke
+    createInvoke,
+    bind
   };
 
   function createInvoke(fn, options = {}) {
     return async(message, inlineOptions = {}) => {
-      const result = await fn(requestMessage.fromValue(message), mergeOptions(methodOptions, options, inlineOptions));
+      const result = await fn(requestMessage.toJSON(message), mergeOptions(methodOptions, options, inlineOptions));
 
       return responseMessage.fromValue(result);
+    }
+  }
+
+  function bind(fn) {
+    return {
+      async invoke(message, context) {
+        const result = await fn(requestMessage.fromValue(message), mergeOptions(methodOptions, context));
+
+        return responseMessage.toJSON(result);
+      },
+      httpRoutes() {
+        return [binding.httpRoute()];
+      },
+      bind
     }
   }
 

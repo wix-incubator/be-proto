@@ -73,7 +73,7 @@ describe('message-generator', () => {
     const generatedMessage = generateMessageUnit(givenProto.root.TestMessage);
 
     expect(generatedMessage.js.code).to.include(`messageBuilder`);
-    expect(generatedMessage.js.code).to.include(`.field('msg', TestMessage2, 1)`);
+    expect(generatedMessage.js.code).to.include(`.field('msg', () => TestMessage2, 1)`);
 
     expect(generatedMessage.js.refs.TestMessage2).to.deep.equal({
       id: 'TestMessage2',
@@ -105,7 +105,7 @@ describe('message-generator', () => {
     const generatedMessage = generateMessageUnit(givenProto.root.nested.a.TestMessage);
 
     expect(generatedMessage.js.code).to.include(`messageBuilder`);
-    expect(generatedMessage.js.code).to.include(`.field('msg', TestMessage2, 1)`);
+    expect(generatedMessage.js.code).to.include(`.field('msg', () => TestMessage2, 1)`);
 
     expect(generatedMessage.js.refs['a.TestMessage2']).to.deep.equal({
       id: 'a.TestMessage2',
@@ -195,7 +195,7 @@ describe('message-generator', () => {
     expect(generatedMessage.js.refs.TestEnum).to.exist;
   });
 
-  it('should generate multiple types', () => {
+  it('should generate multiple interdependent types', () => {
     const givenProto = protobuf.parse(`
       syntax = "proto3";
 
@@ -216,6 +216,7 @@ describe('message-generator', () => {
     expect(generatedMessages.namespace).to.equal('a');
     expect(generatedMessages.exports['TestMessage1'].js.code).to.include(`messageBuilder`);
     expect(generatedMessages.exports['TestMessage2']).to.exist;
+    expect(generatedMessages.exports['TestMessage2'].js.code).to.include(`() => TestMessage1`);
     expect(generatedMessages.js.refs).to.exist;
 
     expect(_.sortBy(Object.keys(generatedMessages.js.refs))).to.deep.equal(['messageBuilder', 'string']);

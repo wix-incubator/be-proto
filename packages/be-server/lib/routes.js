@@ -5,10 +5,10 @@ const querystring = require('querystring');
 module.exports = function routes(bindings) {
   const routes = {};
 
-  bindings.forEach(({binding, invoke}) => {
+  bindings.forEach((binding) => {
     binding.httpRoutes().forEach(({method, path}) => {
       const httpMethodLower = method.toLowerCase();
-      
+
       if (!routes[httpMethodLower]) {
         routes[httpMethodLower] = [];
       }
@@ -16,7 +16,7 @@ module.exports = function routes(bindings) {
       routes[httpMethodLower].push({
         pattern: new UrlPattern(fromCurly(path)),
         method,
-        invoke: binding.createInvoke(invoke)
+        invoke: binding.invoke
       });
     })
   });

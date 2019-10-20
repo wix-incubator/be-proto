@@ -33,6 +33,8 @@ function defineField(context, name, type, modifier, props) {
 }
 
 function message(context) {
+  const typeFunctionMemoized = {};
+
   return {
     isMessageType: true,
     fromValue(value) {
@@ -48,13 +50,33 @@ function message(context) {
       Object.keys(context).forEach((field) => {
         const {repeated, modifier, type} = context[field];
         const fieldValues = sources.find(field);
+        const typeNeedsResolution = typeof(type) === 'function';
+
+        if ((typeNeedsResolution || type.isMessageType) && fieldValues.length == 0) {
+          return null;
+        }
+
+        let resolvedType = type;
+
+        if (typeNeedsResolution) {
+          if (!typeFunctionMemoized[type]) {
+            typeFunctionMemoized[type] = type();
+          }
+
+          resolvedType = typeFunctionMemoized[type];
+        }
+
+        if (!resolvedType || !resolvedType.fromValue) {
+          throw new TypeError(`Failed to resolve type for a field '${field}'`);
+        }
 
         if (repeated) {
-          result[field] = (Array.isArray(fieldValues[0]) ? fieldValues[0] : [fieldValues[0]]).map((value) => type.fromValue(value));
-        } else if (type.isMessageType) {
-          result[field] = type.fromValue(fieldValues);
+          const rawValue = fieldValues.length > 0 ? (Array.isArray(fieldValues[0]) ? fieldValues[0] : [fieldValues[0]]) : [];
+          result[field] = rawValue.map((value) => resolvedType.fromValue(value));
+        } else if (resolvedType.isMessageType) {
+          result[field] = resolvedType.fromValue(fieldValues);
         } else {
-          result[field] = type.fromValue(fieldValues[0]);
+          result[field] = resolvedType.fromValue(fieldValues[0]);
         }
 
         if (modifier && modifier.value) {
@@ -67,6 +89,45 @@ function message(context) {
 
       valueModifiers.forEach(({field, modifier}) => {
         result[field] = modifier.value(result);
+      });
+
+      return result;
+    },
+    toJSON(value) {
+      if (!value) {
+        return null;
+      }
+
+      const result = {};
+
+      Object.keys(value).forEach((field) => {
+        if (!context[field]) {
+          throw new Error(`Unknown message field ${field}`);
+        }
+
+        const {repeated, modifier, type} = context[field];
+        const typeNeedsResolution = typeof(type) === 'function';
+        const fieldValue = value[field];
+
+        let resolvedType = type;
+
+        if (typeNeedsResolution) {
+          if (!typeFunctionMemoized[type]) {
+            typeFunctionMemoized[type] = type();
+          }
+
+          resolvedType = typeFunctionMemoized[type];
+        }
+
+        if (!resolvedType || !resolvedType.fromValue) {
+          throw new TypeError(`Failed to resolve type for a field '${field}'`);
+        }
+
+        if (repeated) {
+          result[field] = fieldValue.map((value) => resolvedType.toJSON(value));
+        } else {
+          result[field] = resolvedType.toJSON(fieldValue);
+        }
       });
 
       return result;

@@ -1,6 +1,6 @@
 const {http, get, post, put} = require('./http-binding');
 const {messageBuilder} = require('./message-builder');
-const {int32} = require('./builtin-types');
+const {int32, string} = require('./builtin-types');
 const {expect} = require('chai');
 const url = require('url');
 const querystring = require('querystring');
@@ -9,7 +9,8 @@ const UrlPattern = require('url-pattern');
 describe('http-binding', () => {
   const message = messageBuilder()
     .field('a', int32, 1)
-    .field('b', int32, 2)
+    .field('b', string, 2)
+    .repeated('c', int32, 3)
     .build();
 
   let invoker;
@@ -27,7 +28,8 @@ describe('http-binding', () => {
 
     expect(result).to.deep.equal({
       a: 1,
-      b: 0
+      b: '',
+      c: []
     });
 
     expect(invoker.invocations()).to.have.length(1);
@@ -38,23 +40,46 @@ describe('http-binding', () => {
     });
   });
 
-  it('should invoke the GET method with multiple values', async() => {
+  it('should skip default values in the query', async() => {
     const givenMethod = http(get('/pass'), message, message, {invoker});
 
     const result = await givenMethod.invoke({
-      a: 1,
-      b: 2
+      a: 0,
+      c: []
     });
 
     expect(result).to.deep.equal({
-      a: 1,
-      b: 2
+      a: 0,
+      b: '',
+      c: []
     });
 
     expect(invoker.invocations()).to.have.length(1);
     expect(invoker.invocations()[0]).to.deep.equal({
       method: 'get',
-      uri: '/pass?a=1&b=2',
+      uri: '/pass?',
+      message: undefined
+    });
+  });
+
+  it('should invoke the GET method with multiple values', async() => {
+    const givenMethod = http(get('/pass'), message, message, {invoker});
+
+    const result = await givenMethod.invoke({
+      a: 1,
+      b: 'Hello'
+    });
+
+    expect(result).to.deep.equal({
+      a: 1,
+      b: 'Hello',
+      c: []
+    });
+
+    expect(invoker.invocations()).to.have.length(1);
+    expect(invoker.invocations()[0]).to.deep.equal({
+      method: 'get',
+      uri: '/pass?a=1&b=Hello',
       message: undefined
     });
   });
@@ -68,7 +93,8 @@ describe('http-binding', () => {
 
     expect(result).to.deep.equal({
       a: 1,
-      b: 0
+      b: '',
+      c: []
     });
 
     expect(invoker.invocations()).to.have.length(1);
@@ -76,8 +102,7 @@ describe('http-binding', () => {
       method: 'post',
       uri: '/pass',
       message: {
-        a: 1,
-        b: 0
+        a: 1
       }
     });
   });
@@ -93,7 +118,8 @@ describe('http-binding', () => {
 
     expect(result).to.deep.equal({
       a: 1,
-      b: 2
+      b: '2',
+      c: []
     });
 
     expect(givenInvoker.invocations()).to.have.length(1);
@@ -101,7 +127,7 @@ describe('http-binding', () => {
       method: 'put',
       uri: '/pass/1',
       message: {
-        b: 2
+        b: '2'
       }
     });
   });
@@ -111,7 +137,7 @@ describe('http-binding', () => {
 
     await givenMethod.invoke({
       a: 1,
-      b: 2
+      b: 'Hello'
     }, {
       invocationOption: 'b'
     });
@@ -133,7 +159,25 @@ describe('http-binding', () => {
   it('should create an invoke function', async() => {
     const invoke = http(put('/pass/{a}'), message, message).createInvoke((message) => message);
 
-    expect(await invoke({a: 1})).to.deep.equal({a: 1, b: 0});
+    expect(await invoke({a: 1})).to.deep.equal({a: 1, b: '', c: []});
+  });
+
+  it('should bind a handler function', async() => {
+    const binding = http(put('/pass/{a}'), message, message).bind((message, context) => ({
+      a: 1001,
+      b: JSON.stringify({
+        receivedMessage: message,
+        context
+      })
+    }));
+
+    const {a, b} = await binding.invoke({a: 1}, {opt: 'A'});
+
+    const response = JSON.parse(b);
+
+    expect(a).to.equal(1001);
+    expect(response.receivedMessage).to.deep.equal({a: 1, b: '', c: []});
+    expect(response.context.opt).to.equal('A');
   });
 
   function testInvoker(fn) {

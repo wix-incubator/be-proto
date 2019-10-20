@@ -16,6 +16,9 @@ function wrapperValue(wrappedType) {
   return {
     fromValue(value) {
       return value ? wrappedType.fromValue(value) : null;
+    },
+    toJSON(value) {
+      return value ? wrappedType.toJSON(value) : null;
     }
   };
 }

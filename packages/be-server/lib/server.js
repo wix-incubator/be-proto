@@ -1,10 +1,23 @@
 const http = require('http');
 const routes = require('./routes');
+const launcher = require('./server-launcher');
+const debug = require('debug')('be-server');
 
 module.exports = function start(options) {
+  if (!options.port) {
+    throw new Error('Port has to be defined');
+  }
+
+  debug(`Server starting at ${options.port}`);
+
   const methodRoutes = routes(options.bindings);
 
   const server = http.createServer(async(req, res) => {
+    if (req.method === 'OPTIONS' && req.url === '/') {
+      res.statusCode = 204;
+      res.end();
+    }
+
     try {
       const {invoke, request} = methodRoutes.resolve(req.method, req.url);
 
@@ -39,13 +52,24 @@ module.exports = function start(options) {
     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
   });
 
-  const handle = server.listen(options.port);
+  const serverStarting = new Promise((resolve) => {
+    const handle = server.listen(options.port, () => {
+      debug(`Server started at ${options.port}`);
 
-  return {
-    stop() {
-      handle.close();
-    }
-  };
+      const instance = {
+        stop() {
+          debug(`Closing server at ${options.port}`);
+          handle.close();
+        }
+      };
+
+      resolve(instance);
+    });
+  });
+
+  launcher.registerStartingInstance(options.port, serverStarting);
+
+  return serverStarting;
 };
 
 async function execute(invoke, res, request, body = {}) {

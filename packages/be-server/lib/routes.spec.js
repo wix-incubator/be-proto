@@ -9,10 +9,9 @@ describe('Routes', () => {
 
   it('should match a GET route', async() => {
     const givenBinding = http(get('/echo'), echoMessage, echoMessage);
-    const givenRoutes = routes([{
-      binding: givenBinding,
-      invoke: (message) => message
-    }]);
+    const givenRoutes = routes([
+      givenBinding.bind((message) => message)
+    ]);
 
     const {request, invoke} = givenRoutes.resolve('GET', '/echo?message=Hello');
 
@@ -32,10 +31,9 @@ describe('Routes', () => {
 
     const givenBinding = http(get('/api/{valueFromPath}'), givenMessage, givenMessage);
 
-    const givenRoutes = routes([{
-      binding: givenBinding,
-      invoke: (message) => message
-    }]);
+    const givenRoutes = routes([
+      givenBinding.bind((message) => message)
+    ]);
 
     const {request, invoke} = givenRoutes.resolve('GET', '/api/path-1?valueFromQuery=query-1');
 
@@ -43,7 +41,7 @@ describe('Routes', () => {
       valueFromPath: 'path-1',
       valueFromQuery: 'query-1'
     });
-    
+
     expect(invoke).to.exist;
     expect(await invoke(request)).to.deep.equal(request);
   });
@@ -53,10 +51,8 @@ describe('Routes', () => {
 
     const givenBinding = http(get('/api/{valueFromPath}'), givenMessage, givenMessage);
 
-    const givenRoutes = routes([{
-      binding: givenBinding,
-      invoke: (message) => message
-    }]);
+    const givenRoutes = routes([
+      givenBinding.bind((message) => message)]);
 
     const {request, invoke} = givenRoutes.resolve('GET', '/api/path-1?test.arr=arr-1&test.arr=arr-2&test.bool=true&num=10');
 

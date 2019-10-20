@@ -19,5 +19,13 @@ describe('well-known-types', () => {
         expect(wellKnownTypes.Int32Value.fromValue(from)).to.equal(to);
       })
     );
+
+    it('should write to JSON', () => {
+      expect(wellKnownTypes.Int32Value.toJSON(12)).to.equal(12);
+    });
+
+    it('should write null to JSON', () => {
+      expect(wellKnownTypes.Int32Value.toJSON(null)).to.be.null;
+    });
   });
 });

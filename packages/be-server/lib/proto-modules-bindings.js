@@ -42,13 +42,13 @@ async function loadProtoBindings(loadedContext, serviceBindings) {
 
         Object.keys(route).forEach((httpMethod) => {
           route[httpMethod].forEach((path) => {
-            bindings.push({
-              binding: httpBinding.http(
+            bindings.push(
+              httpBinding.http(
                 httpBinding[httpMethod.toLowerCase()](path),
                 types.lookup(service, method.requestType),
-                types.lookup(service, method.responseType)),
-              invoke: implementationBindings[jsMethodName]
-            });
+                types.lookup(service, method.responseType)).bind(
+                  implementationBindings[jsMethodName]),
+            );
           });
         });
       }

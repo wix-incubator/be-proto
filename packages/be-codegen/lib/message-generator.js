@@ -91,7 +91,7 @@ function generateReexport(messageOrEnumType, metadata, refs) {
 function generateEnum(enumType, refs = codeReferences([enumType])) {
   const {jsFields} = formatEnumFields(enumType.values);
 
-  const fnCode = `${refs.jsReference('enumBuilder')}.create()${jsFields}.build()`;
+  const fnCode = `${refs.jsReference('enumBuilder')}()${jsFields}.build()`;
 
   return {
     name: enumType.name,
@@ -132,7 +132,7 @@ function formatMessageFields(messageType, refs) {
     const jsFieldMethod = field.repeated ? 'repeated' : 'field';
     const jsFieldModifier = field.partOf ? `${refs.jsReference('oneOf')}('${field.partOf.name}', ${field.id})` : field.id;
 
-    jsFields.push(`.${jsFieldMethod}('${field.name}', ${refs.jsReference(field.type, messageType)}, ${jsFieldModifier})`);
+    jsFields.push(`.${jsFieldMethod}('${field.name}', ${refs.isLocal(field.type, messageType) ? '() => ' : ''}${refs.jsReference(field.type, messageType)}, ${jsFieldModifier})`);
     tsFields.push(`${field.name}${field.partOf ? '?' : ''}: ${refs.tsReference(field.type, messageType)}${field.repeated ? '[]' : ''}`);
   });
 

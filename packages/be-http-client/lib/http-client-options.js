@@ -17,7 +17,8 @@ module.exports = function httpClientBinding(binding, request, response, options 
     httpRoutes() {
       return original.httpRoutes();
     },
-    createInvoke: original.createInvoke
+    createInvoke: original.createInvoke,
+    bind: original.bind
   };
 }
 

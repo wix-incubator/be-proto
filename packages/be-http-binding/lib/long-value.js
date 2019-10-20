@@ -12,6 +12,10 @@ class LongValue {
     return new LongValue(value);
   }
 
+  static toJSON(value) {
+    return value.toString();
+  }
+
   toNumber() {
     return typeof(this.rawValue) === 'number' ? this.rawValue : parseInt(this.rawValue);
   }
@@ -25,4 +29,7 @@ class LongValue {
   }
 }
 
-module.exports = LongValue;
+module.exports = {
+  fromValue: LongValue.fromValue,
+  toJSON: LongValue.toJSON
+};

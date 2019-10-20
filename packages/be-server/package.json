@@ -10,7 +10,7 @@
   "private": false,
   "scripts": {
     "build": "tsc --declaration",
-    "test": "mocha test lib/**/*.spec.js --reporter mocha-env-reporter",
+    "test": "mocha test/**/*.e2e.js lib/**/*.spec.js --reporter mocha-env-reporter",
     "release": "wnpm-release --no-shrinkwrap"
   },
   "devDependencies": {

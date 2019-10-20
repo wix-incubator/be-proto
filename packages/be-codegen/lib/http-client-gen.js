@@ -218,4 +218,6 @@ function formatTypeName(descriptor) {
   return descriptor.namespace ? `${descriptor.namespace}.${descriptor.name}` : descriptor.name;
 }
 
-module.exports = {httpClientGen, mapImport, mapLocalImport};
+module.exports = {
+  httpClientGen, mapImport, mapLocalImport
+};

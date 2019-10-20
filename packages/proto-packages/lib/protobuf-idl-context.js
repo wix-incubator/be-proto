@@ -42,7 +42,7 @@ function create(options) {
   }
 
   async function resolveRoot() {
-    debug('Resolving root', contextDir, sourceRoots, packagesDirName, extraPackages);
+    debug(`Resolving root at ${contextDir}. Source roots: ${sourceRoots.join(', ')}, Extra: ${extraPackages.join(', ')}`);
 
     const protoFiles = await resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extraPackages);
 
@@ -62,7 +62,7 @@ async function resolveProtoRoots(contextDir, sourceRoots, packagesDirName, extra
 
   const depsSourceRoots = await mainPackage.collectAllSourceRoots();
 
-  const extraPackagesFullPath = extraPackages.map((extraPath) => path.resolve(extraPath));
+  const extraPackagesFullPath = await Promise.all(extraPackages.map((extraPath) => fs.realpath(extraPath)));
   const extraSourceRoots = [];
 
   extraPackagesFullPath.forEach((extraPackagePath) => {
@@ -217,18 +217,20 @@ class NpmPackages {
   }
 
   async loadAt(pathToPackage) {
-    if (this._allPackages[pathToPackage]) {
-      return this._allPackages[pathToPackage];
+    const pathToPackageRealpath = await fs.realpath(pathToPackage);
+
+    if (this._allPackages[pathToPackageRealpath]) {
+      return this._allPackages[pathToPackageRealpath];
     }
 
-    const packageJson = JSON.parse(await fs.readFile(path.join(pathToPackage, 'package.json')));
+    const packageJson = JSON.parse(await fs.readFile(path.join(pathToPackageRealpath, 'package.json')));
 
-    const sourceRootPaths =  this._sourceRoots.map((sourceRootPath) =>  path.join(pathToPackage, sourceRootPath));
+    const sourceRootPaths =  this._sourceRoots.map((sourceRootPath) =>  path.join(pathToPackageRealpath, sourceRootPath));
     const existingRootPaths = _.filter(await Promise.all(sourceRootPaths.map((rootPath) => fs.exists(rootPath).then((exists) => [rootPath, exists]))),
       ([, exists]) => exists).map(([rootPath,]) => rootPath);
 
-    const packageSearchPaths = [path.join(pathToPackage, this._packagesDirName)];
-    let currentPath = pathToPackage;
+    const packageSearchPaths = [path.join(pathToPackageRealpath, this._packagesDirName)];
+    let currentPath = pathToPackageRealpath;
 
     while (currentPath && currentPath.length > 1) {
       currentPath = path.resolve(currentPath, '..');
@@ -238,10 +240,10 @@ class NpmPackages {
       }
     }
 
-    const depLoader = new DepLoader(this, packageSearchPaths, pathToPackage);
-    const npmPackage = new NpmPackage(depLoader, pathToPackage, existingRootPaths, packageJson);
+    const depLoader = new DepLoader(this, packageSearchPaths, pathToPackageRealpath);
+    const npmPackage = new NpmPackage(depLoader, pathToPackageRealpath, existingRootPaths, packageJson);
 
-    this._allPackages[pathToPackage] = npmPackage;
+    this._allPackages[pathToPackageRealpath] = npmPackage;
 
     return npmPackage;
   }

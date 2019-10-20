@@ -12,9 +12,9 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 service TypesService {
-  rpc Get (AllTypes) returns (AllTypes) {
+  rpc Echo (AllTypes) returns (AllTypes) {
       option (google.api.http) = {
-        get: "/api/v1/test"
+        get: "/api/v1/echo"
       };
   }
 }
@@ -47,7 +47,7 @@ message AllTypes {
     ForeignEnum optional_foreign_enum = 22;
     string optional_string_piece = 24 [ctype = STRING_PIECE];
     string optional_cord = 25 [ctype = CORD];
-    TestAllTypesProto3 recursive_message = 27;
+    AllTypes recursive_message = 27;
     repeated int32 repeated_int32 = 31;
     repeated int64 repeated_int64 = 32;
     repeated uint32 repeated_uint32 = 33;
