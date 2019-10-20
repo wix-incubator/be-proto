@@ -40,14 +40,14 @@ message Message {
 
 ### Code generation
 
-Install: `npm install --dev be-proto-codegen`
+Install: `npm add --dev be-proto-sdk`
 
 Add to `package.json`
 
 ```json
 {
   "scripts": {
-    "build": "be http-client --output ./be-client hello.HelloService"
+    "build": "be-codegen http-client --output ./be-client hello.HelloService"
   }
 }
 ```
@@ -56,7 +56,7 @@ Run: `npm run build`
 
 ### Use the generated code
 
-Install: `npm install --dev be-proto-runtime`
+Install: `npm add --dev be-proto-runtime`
 
 ```javascript
 
@@ -93,7 +93,7 @@ console.log(message); // prints "Hello!"
 
 ### Proto-less
 
-Install: `npm install --dev be-proto-runtime`
+Install: `npm add --dev be-proto-runtime`
 
 ```javascript
 

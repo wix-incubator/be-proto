@@ -1,5 +1,5 @@
 {
-  "name": "be-proto-codegen",
+  "name": "be-proto-sdk",
   "version": "1.0.0",
   "author": "Mantas Indrašius <mantasi@wix.com>",
   "publishConfig": {
@@ -20,7 +20,7 @@
     "release": "wnpm-release --no-shrinkwrap"
   },
   "bin": {
-    "be": "scripts/be.js"
+    "be-codegen": "scripts/be.js"
   },
   "devDependencies": {
     "@types/chai": "^4.2.3",
