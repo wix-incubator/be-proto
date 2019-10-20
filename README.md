@@ -40,7 +40,7 @@ message Message {
 
 ### Code generation
 
-Install: `npm install --dev @wix/be-codegen`
+Install: `npm install --dev be-proto-codegen`
 
 Add to `package.json`
 
@@ -56,7 +56,7 @@ Run: `npm run build`
 
 ### Use the generated code
 
-Install: `npm install --dev @wix/be-http-client`
+Install: `npm install --dev be-proto-runtime`
 
 ```javascript
 
@@ -75,13 +75,10 @@ console.log(message); // prints "Hello!"
 
 const {Greet, greet} = require('./be-client/hello/HelloService.Greet';
 
-const beServer = require('@wix/be-server');
+const beServer = require('be-proto-runtime/server');
 
 const server = await beServer.builder()
-  .withBindings([{
-    binding: Greet,
-    invoke: (message) => message
-  }])
+  .withBindings(Greet.bind((message) => message))
   .start({ port: 9901 });
 
 
@@ -96,12 +93,12 @@ console.log(message); // prints "Hello!"
 
 ### Proto-less
 
-Install: `npm install --dev @wix/be-http-client`
+Install: `npm install --dev be-proto-runtime`
 
 ```javascript
 
-  const {http, get, messageBuilder, string} = require('@wix/be-http-client');
-  const beServer = require('@wix/be-server');
+  const {http, get, messageBuilder, string} = require('be-proto-runtime/http');
+  const beServer = require('be-proto-runtime/server');
 
   const echoMessage = messageBuilder()
     .field('message', string, 1)
@@ -113,10 +110,7 @@ Install: `npm install --dev @wix/be-http-client`
   });
 
   const server = await beServer.builder()
-    .withBindings([{
-      binding: getEcho,
-      invoke: (message) => message
-    }])
+    .withBindings(getEcho.bind((message) => message))
     .start({ port: 9901 });
 
   const {message} = await getEcho.invoke({
